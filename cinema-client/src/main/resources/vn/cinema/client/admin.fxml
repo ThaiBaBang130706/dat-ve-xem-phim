@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.cinema.client.controller.AdminController" spacing="12">
+ <HBox spacing="12">
+  <Button text="Tải lại dữ liệu" onAction="#refresh"/>
+  <Button fx:id="dashboardButton" text="Mở dashboard trên trình duyệt ↗" onAction="#openDashboard" styleClass="primary"/>
+ </HBox>
+ <TabPane fx:id="tabs" VBox.vgrow="ALWAYS"/>
+</VBox>

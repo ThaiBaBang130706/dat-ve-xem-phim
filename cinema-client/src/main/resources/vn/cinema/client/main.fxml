@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.cinema.client.controller.MainController" styleClass="page">
+ <left>
+  <VBox spacing="14" prefWidth="215" styleClass="sidebar">
+   <padding><Insets top="32" left="20" right="20" bottom="24"/></padding>
+   <Label text="CB / CINEMA" styleClass="brand"/>
+   <Label text="Hẹn nhau ở rạp" styleClass="light-text"/>
+   <Separator/>
+   <Button text="Phim đang chiếu" onAction="#home" maxWidth="Infinity" styleClass="nav-button"/>
+   <Button text="Vé của tôi" onAction="#tickets" maxWidth="Infinity" styleClass="nav-button"/>
+   <Button text="Tài khoản" onAction="#account" maxWidth="Infinity" styleClass="nav-button"/>
+   <Button fx:id="adminButton" text="Quản lý rạp" onAction="#administration" maxWidth="Infinity" styleClass="nav-button"/>
+   <Region VBox.vgrow="ALWAYS"/>
+   <Label fx:id="userLabel" wrapText="true" styleClass="light-text"/>
+   <Label fx:id="connectionLabel" wrapText="true" styleClass="light-text"/>
+   <Button text="Đăng xuất" onAction="#logout" maxWidth="Infinity"/>
+  </VBox>
+ </left>
+ <center>
+  <BorderPane>
+   <top><VBox spacing="5" styleClass="topbar">
+    <Label fx:id="pageTitle" text="Phim đang chiếu" styleClass="page-title"/>
+    <Label fx:id="notice" text="Chọn phim để xem lịch chiếu." styleClass="muted" wrapText="true"/>
+   </VBox></top>
+   <center><VBox fx:id="content" spacing="16" styleClass="content"/></center>
+  </BorderPane>
+ </center>
+</BorderPane>

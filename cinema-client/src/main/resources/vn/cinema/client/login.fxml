@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<HBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.cinema.client.controller.ConnectionController" styleClass="page">
+ <VBox prefWidth="480" spacing="24" styleClass="login-brand">
+  <padding><Insets top="72" left="52" right="45" bottom="52"/></padding>
+  <Label text="CB / CINEMA BOOKING" styleClass="brand"/>
+  <Label text="Một chỗ ngồi.&#10;Một buổi xem phim." styleClass="login-title" wrapText="true"/>
+  <Label text="Chọn phim, rủ bạn cùng xem và giữ ghế ngay trên mạng nội bộ của rạp." wrapText="true" styleClass="light-text"/>
+  <Region VBox.vgrow="ALWAYS"/>
+  <Label text="Đồ án Lập trình mạng · Java TCP" styleClass="light-text"/>
+  <Label text="Dữ liệu và thanh toán trong ứng dụng là mô phỏng phục vụ buổi thực hành." wrapText="true" styleClass="light-text"/>
+ </VBox>
+ <VBox spacing="18" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+  <padding><Insets top="48" left="56" right="56" bottom="48"/></padding>
+  <Label text="Kết nối với rạp" styleClass="page-title"/>
+  <Label text="Chạy server trước, sau đó nhập IP máy server." styleClass="muted"/>
+  <HBox spacing="12">
+   <TextField fx:id="hostField" text="127.0.0.1" promptText="IP server" HBox.hgrow="ALWAYS"/>
+   <TextField fx:id="portField" text="5000" prefWidth="90"/>
+   <Button fx:id="connectButton" text="Kết nối" onAction="#connect" styleClass="secondary"/>
+  </HBox>
+  <Separator/>
+  <VBox fx:id="loginBox" spacing="13" disable="true">
+   <Label text="Đăng nhập" styleClass="section-title"/>
+   <TextField fx:id="usernameField" promptText="Tên đăng nhập"/>
+   <PasswordField fx:id="passwordField" promptText="Mật khẩu (ít nhất 8 ký tự)" onAction="#login"/>
+   <Button fx:id="loginButton" text="Đăng nhập" onAction="#login" maxWidth="Infinity" styleClass="primary"/>
+   <Label text="Chưa có tài khoản? Điền thêm tên hiển thị để đăng ký." wrapText="true" styleClass="muted"/>
+   <TextField fx:id="nameField" promptText="Tên hiển thị (dùng khi đăng ký)"/>
+   <Button fx:id="registerButton" text="Tạo tài khoản" onAction="#register" maxWidth="Infinity"/>
+  </VBox>
+  <Label fx:id="statusLabel" text="Chưa kết nối." wrapText="true" styleClass="status"/>
+ </VBox>
+</HBox>
