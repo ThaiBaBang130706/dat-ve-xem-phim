@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CinemaBooking · Theo dõi rạp</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/socket.io/socket.io.js" defer></script>
+  <script src="/vendor/chart.js" defer></script>
+  <script src="/dashboard.js" defer></script>
+</head>
+<body>
+  <aside>
+    <a class="brand" href="/">CB / CINEMA</a>
+    <p>Góc nhìn từ quầy vé</p>
+    <nav aria-label="Mục dashboard">
+      <a href="#overview">Tổng quan</a><a href="#shows">Suất chiếu</a><a href="#bookings">Đơn vé gần đây</a><a href="#logs">Nhật ký</a>
+    </nav>
+    <div class="aside-note">Đồ án Lập trình mạng<br>Dữ liệu và doanh thu mô phỏng</div>
+  </aside>
+  <main>
+    <header>
+      <div><p class="eyebrow">CINEMABOOKING / QUẢN LÝ RẠP</p><h1>Hôm nay ở rạp</h1></div>
+      <div class="session"><span id="username"></span><button id="logout" hidden>Đăng xuất</button></div>
+    </header>
+    <section id="login-panel" class="card login">
+      <div><p class="eyebrow">DÀNH CHO QUẢN TRỊ VIÊN</p><h2>Đăng nhập để xem số liệu</h2><p>Dùng tài khoản quản trị đã tạo trên Java server.</p></div>
+      <form id="login-form">
+        <label>Tên đăng nhập<input name="username" autocomplete="username" required maxlength="32"></label>
+        <label>Mật khẩu<input name="password" type="password" autocomplete="current-password" required maxlength="128"></label>
+        <button class="primary" type="submit">Mở dashboard</button>
+        <p id="login-error" role="alert"></p>
+      </form>
+    </section>
+    <div id="dashboard" hidden>
+      <div class="status-line"><span id="status" role="status">Đang lấy số liệu…</span><time id="updated"></time></div>
+      <section id="overview" class="stats" aria-label="Thống kê">
+        <article class="card"><p>Doanh thu demo</p><strong id="revenue">—</strong><small>Đơn đang xác nhận, gồm dữ liệu mẫu</small></article>
+        <article class="card"><p>Vé còn hiệu lực</p><strong id="tickets">—</strong><small>Đã trừ vé huỷ</small></article>
+        <article class="card"><p>Ghế đang giữ</p><strong id="held">—</strong><small>Tự trả sau 5 phút</small></article>
+        <article class="card"><p>Client đang kết nối</p><strong id="clients">—</strong><small>Kết nối TCP tới Java server</small></article>
+      </section>
+      <section class="charts">
+        <article class="card"><h2>Doanh thu 7 ngày gần nhất</h2><div class="chart"><canvas id="revenue-chart" aria-label="Biểu đồ doanh thu" role="img"></canvas></div></article>
+        <article class="card"><h2>Ghế của các suất sắp tới</h2><div class="chart"><canvas id="seat-chart" aria-label="Biểu đồ ghế đã bán và đang giữ" role="img"></canvas></div></article>
+      </section>
+      <section id="shows" class="card"><div class="section-head"><h2>Lịch chiếu sắp tới</h2><span id="show-count"></span></div>
+        <div class="table-wrap"><table><thead><tr><th>Phim</th><th>Phòng</th><th>Bắt đầu</th><th>Giá vé</th><th>Đã bán</th><th>Đang giữ</th><th>Lấp đầy</th></tr></thead><tbody id="shows-body"></tbody></table></div>
+      </section>
+      <section id="bookings" class="card"><h2>Đơn vé gần đây</h2>
+        <div class="table-wrap"><table><thead><tr><th>Mã vé</th><th>Khách</th><th>Phim / ghế</th><th>Tổng tiền</th><th>Trạng thái</th><th>Đặt lúc</th></tr></thead><tbody id="bookings-body"></tbody></table></div>
+      </section>
+      <section id="logs" class="card"><h2>Nhật ký thao tác</h2>
+        <div class="table-wrap"><table><thead><tr><th>Thời gian</th><th>Tài khoản</th><th>Thao tác</th><th>Chi tiết</th></tr></thead><tbody id="logs-body"></tbody></table></div>
+      </section>
+      <footer>Dashboard chỉ đọc dữ liệu. Thêm phim, đổi lịch chiếu và huỷ vé tại ứng dụng JavaFX.</footer>
+    </div>
+  </main>
+</body>
+</html>

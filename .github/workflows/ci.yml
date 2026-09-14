@@ -27,3 +27,23 @@ jobs:
         with:
           name: test-reports
           path: '**/target/surefire-reports/*'
+  dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dashboard dependencies
+        working-directory: cinema-dashboard
+        run: npm install --no-audit --no-fund
+      - name: Check and test dashboard
+        working-directory: cinema-dashboard
+        run: |
+          npm run check
+          npm test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-dependency-lock
+          path: cinema-dashboard/package-lock.json
