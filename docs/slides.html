@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CinemaBooking — Thảo luận Lập trình mạng</title>
+<style>
+:root{font-family:"Segoe UI",Arial,sans-serif;color:#183449;background:#dce3e5;font-synthesis:none}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}.deck{width:min(1200px,calc(100vw - 36px),calc((100vh - 90px)*1.77778));aspect-ratio:16/9;box-shadow:0 15px 55px #29435426}.slide{display:none;background:#f7f4ec;width:100%;height:100%;padding:3.6%;position:relative;overflow:auto}.slide.active{display:flex;flex-direction:column}.eyebrow{font-size:clamp(9px,1vw,13px);letter-spacing:2px;font-weight:750;color:#a86331;margin:0 0 14px}h1{font-size:clamp(28px,4.5vw,60px);line-height:1.08;letter-spacing:-2px;margin:0 0 20px}h2{font-size:clamp(22px,3vw,38px);line-height:1.15;letter-spacing:-1px;margin:0 0 22px}h3{font-size:clamp(16px,1.7vw,23px);margin:0 0 13px}p,li,td,th{font-size:clamp(12px,1.4vw,18px);line-height:1.48}p{margin:0 0 16px}small,.caption{font-size:clamp(10px,1vw,13px);color:#697c87;line-height:1.5}.grid{display:grid;gap:22px;grid-template-columns:1fr 1fr;align-items:start}.three{grid-template-columns:repeat(3,1fr)}.card{background:#fff;border:1px solid #e0e4df;border-radius:12px;padding:22px}.tint{background:#e7eee9;border:0}.warm{background:#f2dfc8;border:0}.dark{background:#183449;color:#fff}.dark .caption,.dark small{color:#bbcdd6}.dark .eyebrow{color:#eeb479}.hero{display:grid;grid-template-columns:1.3fr .7fr;gap:50px;align-items:center;flex:1}.hero p{max-width:620px}.badge{display:inline-block;padding:6px 11px;border-radius:5px;background:#e9ebe4;color:#526b78;font-size:13px;margin:3px 4px 8px 0}.note{background:#efe7d8;border-left:4px solid #d98848;padding:14px 18px;margin-top:18px}.bottom{margin-top:auto;padding-top:18px;display:flex;justify-content:space-between;color:#6f8088;font-size:clamp(9px,1vw,12px)}.dark .bottom{color:#a9beca}.seat-row{display:flex;gap:10px;justify-content:center;margin:20px 0}.seat{display:flex;align-items:center;justify-content:center;width:49px;height:47px;border-radius:9px 9px 4px 4px;background:#bedecb;font-weight:750;font-size:18px;color:#1b5035}.held{background:#ead182;color:#755616}.mine{background:#edaa63;color:#5c340d}.sold{background:#c96965;color:white}.off{background:#cbd1d4;color:#6c7b83}.screen{text-align:center;letter-spacing:6px;border-top:8px solid #d7e1e4;border-radius:50%;padding:13px;color:#7d909a;margin-bottom:15px;font-size:13px}.ticket{padding:28px;background:#f8f4eb;color:#1b384b;border-radius:12px;transform:rotate(3deg)}.ticket .code{font-size:56px;font-weight:800;margin:20px 0}.ticket hr{border:0;border-top:2px dashed #c8d0cf;margin:20px 0}table{border-collapse:collapse;width:100%}th{text-align:left;color:#7b5b3f;font-weight:700}td,th{border-bottom:1px solid #d9dfdc;padding:11px 13px;vertical-align:top}tr:last-child td{border-bottom:0}.compact td,.compact th{font-size:clamp(11px,1.2vw,16px);padding:10px 12px}ol,ul{margin:0;padding-left:24px}li{margin:0 0 11px}code{font-family:Consolas,monospace;background:#e5ebea;border-radius:4px;padding:2px 5px;font-size:.9em}pre{font-family:Consolas,monospace;font-size:clamp(12px,1.3vw,17px);line-height:1.6;white-space:pre-wrap;background:#183449;color:#d6e8e8;padding:23px;border-radius:9px;margin:0}.steps{counter-reset:step;display:grid;gap:13px}.step{background:white;border:1px solid #dde4df;border-radius:9px;padding:15px 18px;display:flex;align-items:flex-start;gap:16px;font-size:clamp(12px,1.4vw,18px);line-height:1.4}.step:before{counter-increment:step;content:counter(step,decimal-leading-zero);color:#b8753e;font-weight:800}.metric{font-size:clamp(34px,4vw,55px);font-weight:800;line-height:1;margin:8px 0 17px;color:#b96c30}svg{display:block;width:100%;height:auto;max-height:420px}svg text{font-family:"Segoe UI",Arial,sans-serif;fill:#183449;font-size:18px}svg .small{font-size:14px;fill:#637d8b}svg .box{fill:#fff;stroke:#c6d1d5;stroke-width:2}svg .core{fill:#183449;stroke:#183449}svg .white{fill:#fff}svg .line{stroke:#6b8997;stroke-width:2;fill:none}svg .dash{stroke-dasharray:6 5}.controls{display:flex;gap:10px;align-items:center;font-size:13px;color:#385466}button{font:inherit;border:0;border-radius:6px;background:#fff;color:#24465c;padding:9px 15px;cursor:pointer}button:hover{background:#f3e0c9}button:disabled{opacity:.4;cursor:default}#counter{min-width:65px;text-align:center}a{color:#956034;text-underline-offset:3px}[contenteditable]{outline:1px dashed #77909e;outline-offset:5px;padding:3px}[contenteditable]:focus{outline:2px solid #e6af77}.hint{font-size:12px;color:#69818e}.strong{font-weight:750}.fill{flex:1}.sources a{font-size:14px}
+@media print{@page{size:320mm 180mm;margin:0}body{display:block;background:white}.deck{width:320mm;height:auto;box-shadow:none;aspect-ratio:auto}.slide,.slide.active{display:flex;width:320mm;height:180mm;break-after:page;page-break-after:always;padding:13mm;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}.slide:last-child{break-after:auto;page-break-after:auto}.controls,.hint{display:none}.eyebrow{font-size:11px}h1{font-size:54px}h2{font-size:35px}p,li,td,th{font-size:17px}.compact td,.compact th{font-size:15px}.bottom{font-size:11px}[contenteditable]{outline:0}svg{max-height:400px}}
+</style>
+</head>
+<body>
+<main class="deck">
+<section class="slide dark active">
+<p class="eyebrow">THẢO LUẬN MÔN LẬP TRÌNH MẠNG / CLIENT–SERVER</p>
+<div class="hero">
+<div><h1>Ghế B3 chỉ bán<br>cho một người.</h1><p>Xây dựng ứng dụng đặt vé xem phim bằng Java TCP, chạy trên nhiều máy trong mạng LAN.</p><p class="caption">CinemaBooking · JavaFX · SQLite · Dashboard</p><p contenteditable="true" id="group" class="caption" aria-label="Thông tin nhóm">Nhóm: [Tên và MSSV của 2–3 thành viên] · Lớp: [Điền lớp]</p></div>
+<div class="ticket"><p class="eyebrow">VÉ MINH HOẠ / DEMO</p><h3>Hẹn Nhau Ở Huế</h3><div class="code">B3</div><p>Phòng P1 · 75.000 đ</p><hr><small>Chỗ ngồi chỉ được xác nhận<br>sau khi server ghi nhận đặt vé.</small></div>
+</div><div class="bottom"><span>CinemaBooking</span><span>01</span></div>
+</section>
+
+<section class="slide">
+<p class="eyebrow">01 / BÀI TOÁN</p><h2>Nếu hai máy cùng bấm “Giữ ghế”?</h2>
+<div class="grid">
+<div class="card"><h3>Máy A — user1</h3><p>Đang nhìn thấy B3 trống.<br>Chọn B3 và bấm giữ ghế.</p><div class="seat-row"><span class="seat">B2</span><span class="seat mine">B3</span><span class="seat">B4</span></div></div>
+<div class="card"><h3>Máy B — user2</h3><p>Cũng thấy B3 trống từ lần tải trước.<br>Gửi yêu cầu gần như cùng lúc.</p><div class="seat-row"><span class="seat">B2</span><span class="seat held">B3</span><span class="seat">B4</span></div></div>
+</div>
+<div class="note"><p><strong>Client hiển thị lựa chọn; server quyết định ai giữ được ghế.</strong><br>Một người thành công, người còn lại nhận trạng thái mới và chọn ghế khác.</p></div>
+<div class="bottom"><span>Điểm cần chứng minh khi demo: không có hai vé còn hiệu lực cho cùng B3.</span><span>02</span></div>
+</section>
+
+<section class="slide">
+<p class="eyebrow">02 / SƠ ĐỒ HOẠT ĐỘNG</p><h2>Một nơi quyết định trạng thái ghế</h2>
+<svg viewBox="0 0 960 425" role="img" aria-label="Hai JavaFX client kết nối Java TCP server; server lưu SQLite và cung cấp HTTP cho Node dashboard.">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 Z" fill="#6b8997"/></marker></defs>
+<rect class="box" x="20" y="30" width="180" height="85" rx="12"/><text x="45" y="65">JavaFX máy A</text><text class="small" x="45" y="91">Chọn phim, giữ ghế</text>
+<rect class="box" x="20" y="170" width="180" height="85" rx="12"/><text x="45" y="205">JavaFX máy B</text><text class="small" x="45" y="231">Cùng xem một suất</text>
+<rect class="core" x="350" y="55" width="230" height="195" rx="12"/><text class="white" x="385" y="95">Java server</text><text class="white" x="378" y="139">Xác thực · giữ ghế</text><text class="white" x="378" y="170">Đặt vé · phân quyền</text><text class="white" x="378" y="212">TCP 5000 / HTTP 5001</text>
+<rect class="box" x="730" y="100" width="205" height="100" rx="12"/><text x="772" y="142">SQLite</text><text class="small" x="770" y="171">cinema.db</text>
+<path class="line" d="M200 73 L350 105" marker-start="url(#arrow)" marker-end="url(#arrow)"/><path class="line" d="M200 213 L350 196" marker-start="url(#arrow)" marker-end="url(#arrow)"/><text class="small" x="220" y="139">TCP JSON Lines</text>
+<path class="line" d="M580 150 L730 150" marker-start="url(#arrow)" marker-end="url(#arrow)"/><text class="small" x="622" y="135">JDBC</text>
+<rect class="box" x="350" y="330" width="230" height="80" rx="12"/><text x="386" y="365">Node dashboard</text><text class="small" x="404" y="393">Chỉ đọc dữ liệu</text>
+<rect class="box" x="730" y="330" width="205" height="80" rx="12"/><text x="752" y="367">Trình duyệt admin</text><text class="small" x="794" y="394">Cổng 3000</text>
+<path class="line" d="M465 330 L465 250" marker-start="url(#arrow)" marker-end="url(#arrow)"/><text class="small" x="483" y="294">HTTP + khoá</text>
+<path class="line" d="M580 371 L730 371" marker-start="url(#arrow)" marker-end="url(#arrow)"/><text class="small" x="620" y="354">Socket.IO</text>
+</svg>
+<div class="bottom"><span>Đặt vé đi qua TCP. Node không ghi trực tiếp vào database.</span><span>03</span></div>
+</section>
+
+<section class="slide">
+<p class="eyebrow">03 / LUỒNG ĐẶT VÉ</p><h2>Từ lúc chọn ghế đến lúc có mã vé</h2>
+<div class="grid">
+<div class="steps"><div class="step">Client tải phim, lịch chiếu và sơ đồ ghế; đăng ký nhận cập nhật của suất.</div><div class="step">Bấm giữ → server kiểm tra tất cả ghế → giữ 5 phút.</div><div class="step">Bấm thanh toán demo → server kiểm tra lại chủ giữ, hạn giữ và giá.</div><div class="step">Ghi đơn + vé + ghế SOLD → commit → trả mã vé và cập nhật hai máy.</div></div>
+<div><pre>{"id": "req-21",
+ "type": "HOLD_SEATS",
+ "token": "...",
+ "data": {
+   "showId": 1,
+   "seats": ["B3"]
+ }}</pre><div class="note"><p>Mỗi JSON kết thúc bằng một ký tự xuống dòng. Đọc đủ một dòng rồi mới xử lý.</p></div></div>
+</div>
+<div class="bottom"><span>Phản hồi có cùng id; sự kiện server chủ động gửi có id=null.</span><span>04</span></div>
+</section>
+
+<section class="slide">
+<p class="eyebrow">04 / CHỨC NĂNG SERVER</p><h2>Phần việc máy khách không tự quyết</h2>
+<div class="grid three">
+<div class="card"><h3>Tài khoản &amp; quyền</h3><p>Kiểm tra mật khẩu, phiên kết nối và quyền admin ở mỗi yêu cầu.</p><small>Ẩn nút admin trên giao diện chưa đủ để phân quyền.</small></div>
+<div class="card"><h3>Ghế &amp; đặt vé</h3><p>Giữ, trả, mua, huỷ ghế trong transaction; tự tính tổng tiền.</p><small>Không tin giá tiền do client gửi lên.</small></div>
+<div class="card"><h3>Lịch &amp; vận hành</h3><p>Ngăn trùng phòng; dọn ghế hết hạn; phát sự kiện; ghi nhật ký.</p><small>Giữa hai suất có 15 phút dọn phòng.</small></div>
+</div>
+<div class="note"><p><strong>Ví dụ:</strong> user2 không được xác nhận ghế B3 đang do phiên của user1 giữ, dù tự gửi được lệnh CONFIRM_BOOKING.</p></div>
+<div class="bottom"><span>Mã xử lý: AuthService · BookingService · AdminService · TcpServer</span><span>05</span></div>
+</section>
+
+<section class="slide">
+<p class="eyebrow">05 / CHỨC NĂNG CLIENT</p><h2>Người dùng cần thấy chuyện gì đang xảy ra</h2>
+<div class="grid">
+<div><div class="card"><div class="screen">MÀN HÌNH</div><div class="seat-row"><span class="seat">B1</span><span class="seat held">B2</span><span class="seat mine">B3</span><span class="seat sold">B4</span><span class="seat off">B5</span></div><p class="caption">Minh hoạ: trống / người khác giữ / bạn giữ / đã bán / tạm khoá</p><h3>Còn 04:32 để xác nhận vé</h3><p class="caption">Bộ đếm dựa trên thời gian do server trả về.</p></div></div>
+<div><ul><li>Nhập IP và cổng, kết nối, đăng nhập hoặc đăng ký.</li><li>Tìm phim, xem nội dung, chọn suất và tối đa 8 ghế.</li><li>Nhận ghế đổi màu ngay khi người khác giữ hoặc mua.</li><li>Xem vé và QR; huỷ trước giờ chiếu; sửa tài khoản.</li></ul><p class="caption">Giao diện dùng JavaFX + FXML/CSS. Chờ mạng ở luồng riêng để cửa sổ vẫn thao tác được.</p></div>
+</div>
+<div class="bottom"><span>Chọn ghế mới là thao tác trên máy; bấm Giữ ghế mới gửi yêu cầu lên server.</span><span>06</span></div>
+</section>
+
+<section class="slide">
+<p class="eyebrow">06 / CÁC TÌNH HUỐNG</p><h2>Không chỉ thử trường hợp đặt vé thành công</h2>
+<table class="compact"><thead><tr><th>Tình huống</th><th>Ứng dụng xử lý</th><th>Cách kiểm tra</th></tr></thead><tbody>
+<tr><td>Hai máy tranh B3</td><td>Một phiên giữ thành công</td><td>Hai client và test 12 luồng</td></tr>
+<tr><td>B3 bận, B4 trống</td><td>Từ chối cả bộ B3/B4; không giữ một nửa</td><td>Đối chiếu B4 sau yêu cầu lỗi</td></tr>
+<tr><td>Giữ rồi bỏ đi</td><td>Trả ghế sau 5 phút</td><td>Chờ bộ đếm / test đồng hồ</td></tr>
+<tr><td>Rút mạng</td><td>Heartbeat timeout, trả ghế phiên</td><td>Có thể cần khoảng 65 giây</td></tr>
+<tr><td>Xác nhận bị gửi lại</td><td>Cùng requestId → trả đơn cũ</td><td>So sánh mã đơn, số vé</td></tr>
+<tr><td>Huỷ hoặc xem vé người khác</td><td>Server kiểm tra chủ vé/admin</td><td>Gửi bookingId của user khác</td></tr>
+</tbody></table>
+<div class="bottom"><span>Thông báo lỗi cần giúp người dùng chọn lại, không chỉ hiện “Error”.</span><span>07</span></div>
+</section>
+
+<section class="slide">
+<p class="eyebrow">07 / THUẬT TOÁN GIỮ GHẾ</p><h2>Kiểm tra cả bộ ghế, rồi mới cập nhật</h2>
+<div class="grid">
+<div class="steps"><div class="step">Lấy khoá ReentrantLock ứng với showId.</div><div class="step">Mở transaction; kiểm tra tài khoản, suất chiếu và từng ghế.</div><div class="step">Hợp lệ hết → đổi sang HELD, ghi chủ phiên và hạn giữ. Có lỗi → rollback.</div><div class="step">Commit, tăng revision, nhả khoá rồi phát snapshot tới các client.</div></div>
+<div class="card tint"><h3>Vì sao cần cả hai?</h3><p><strong>Khoá Java</strong><br>Điều phối các luồng xử lý cùng một suất.</p><p><strong>Transaction SQLite</strong><br>Giữ các cập nhật liên quan cùng thành công hoặc cùng thất bại.</p><small>SQLite chỉ có một writer. Bản này phù hợp đồ án LAN; chưa đo khả năng phục vụ một hệ thống rạp lớn.</small></div>
+</div>
+<div class="bottom"><span>Danh sách ghế mới thay danh sách cũ chỉ khi toàn bộ yêu cầu hợp lệ.</span><span>08</span></div>
+</section>
+
+<section class="slide">
+<p class="eyebrow">08 / THUẬT TOÁN XÁC NHẬN VÉ</p><h2>Mất phản hồi không có nghĩa là chưa mua</h2>
+<div class="grid">
+<div class="card"><h3>Cùng một lần thanh toán</h3><p>Client giữ nguyên requestId khi thử lại. Server tìm đơn theo:</p><pre>UNIQUE(user_id, request_id)</pre><p style="margin-top:16px">Đã tồn tại và cùng suất/bộ ghế → trả lại đơn đó.</p></div>
+<div class="card"><h3>Một vé còn hiệu lực cho mỗi ghế</h3><p>Ghi booking, tickets và trạng thái SOLD cùng transaction.</p><pre>UNIQUE(show_id, seat_label)
+WHERE status = 'ACTIVE'</pre><p style="margin-top:16px">Index ở database ngăn tạo hai vé ACTIVE cho cùng ghế.</p></div>
+</div>
+<div class="note"><p>Giá trong database × số ghế = tổng đơn. Thanh toán hiện là mô phỏng, không kết nối ngân hàng.</p></div>
+<div class="bottom"><span>QR chứa mã vé demo; chưa có dịch vụ quét soát vé.</span><span>09</span></div>
+</section>
+
+<section class="slide">
+<p class="eyebrow">09 / TỔ CHỨC VÀ QUẢN LÝ DỮ LIỆU</p><h2>Trạng thái ghế thuộc về một suất chiếu</h2>
+<table class="compact"><thead><tr><th>Nhóm dữ liệu</th><th>Bảng</th><th>Điểm cần nhớ</th></tr></thead><tbody>
+<tr><td>Danh mục rạp</td><td>movies, rooms, showtimes</td><td>Phim/phòng ngừng dùng vẫn giữ lịch sử</td></tr>
+<tr><td>Ghế theo suất</td><td>seats_state</td><td>Khoá chính: show_id + seat_label</td></tr>
+<tr><td>Tài khoản</td><td>users</td><td>Hash mật khẩu, quyền, trạng thái</td></tr>
+<tr><td>Đơn và vé</td><td>bookings, tickets</td><td>Vé lưu tên phim, giờ và giá lúc mua</td></tr>
+<tr><td>Theo dõi thao tác</td><td>logs</td><td>Ai làm gì, vào lúc nào; không ghi mật khẩu</td></tr>
+</tbody></table>
+<div class="grid" style="margin-top:22px"><p><strong>B3 ở suất 10 giờ</strong> và <strong>B3 ở suất 13 giờ</strong> là hai bản ghi khác nhau.</p><p><strong>Huỷ vé:</strong> đổi trạng thái, trả ghế; không xoá lịch sử đơn.</p></div>
+<div class="bottom"><span>Tiền: số nguyên VND · Thời gian: epoch milliseconds · Hiển thị giờ Việt Nam</span><span>10</span></div>
+</section>
+
+<section class="slide">
+<p class="eyebrow">10 / DEMO TRƯỚC LỚP</p><h2>Hai cửa sổ, một ghế và một dashboard</h2>
+<div class="grid">
+<div class="steps"><div class="step">A đăng nhập user1, B đăng nhập user2. Cùng mở một suất có B3 trống.</div><div class="step">A giữ B3 → B thấy B3 chuyển vàng và không giữ được.</div><div class="step">A thanh toán demo → B3 đỏ ở hai máy, xuất hiện vé/QR.</div><div class="step">Mở dashboard xem đơn; A huỷ vé → B3 xanh, doanh thu demo giảm.</div></div>
+<div class="card warm"><h3>Chuẩn bị trước khi lên trình bày</h3><ul><li>Kiểm tra IP và firewall.</li><li>Dùng lịch chưa quá giờ chiếu.</li><li>Mở dashboard bằng admin.</li><li>Giữ một ghế từ đầu buổi để quay lại xem hết hạn sau 5 phút.</li></ul><small>Ghi lại kết quả tự chạy trên máy của nhóm; không dùng lời khẳng định thay cho demo.</small></div>
+</div>
+<div class="bottom"><span>Chi tiết thao tác và câu hỏi gợi ý: docs/DEMO.md</span><span>11</span></div>
+</section>
+
+<section class="slide">
+<p class="eyebrow">11 / KIỂM TRA &amp; GIỚI HẠN</p><h2>Cái đã kiểm tra và cái chưa triển khai</h2>
+<div class="grid">
+<div class="card tint"><h3>Có kiểm thử trong repo</h3><ul><li>Tranh ghế, rollback, hết hạn và ngắt kết nối.</li><li>Thanh toán lặp, quyền sở hữu vé và quyền admin.</li><li>Hai socket TCP thật, HTTP bridge và Socket.IO.</li><li>Nạp FXML/CSS và chạy JAR đóng gói.</li></ul><small>Kết quả chạy được lưu tại tab Actions trên GitHub.</small></div>
+<div class="card"><h3>Giới hạn nói rõ khi bảo vệ</h3><ul><li>Một server, chưa có dự phòng hay failover.</li><li>LAN chưa có TLS.</li><li>Thanh toán/QR là demo.</li><li>Chưa có VIP, bắp nước hoặc khuyến mãi.</li><li>Chưa tự động kiểm tra mọi thao tác GUI trên Windows.</li></ul></div>
+</div>
+<div class="bottom"><span>Không gọi mô hình này là P2P hay hệ phân tán chỉ vì có nhiều máy truy cập.</span><span>12</span></div>
+</section>
+
+<section class="slide dark">
+<p class="eyebrow">12 / PHÂN CÔNG NHÓM</p><h2>Mỗi người cần giải thích được đường đi của B3</h2>
+<div class="grid three">
+<div class="card"><h3>Thành viên A</h3><p>TCP server<br>Giữ ghế và xử lý tranh chấp<br>Kiểm thử đồng thời</p></div>
+<div class="card"><h3>Thành viên B</h3><p>JavaFX<br>Luồng chọn, giữ, mua, huỷ<br>Thông báo và bộ đếm</p></div>
+<div class="card"><h3>Thành viên C</h3><p>SQLite và dữ liệu mẫu<br>Dashboard<br>Kịch bản demo, slide</p></div>
+</div>
+<p style="margin-top:24px">Nhóm 2 người: A phụ trách server/SQLite/test; B phụ trách JavaFX/dashboard/demo. Điền lại tên và phần việc theo nhóm thực tế.</p>
+<p class="caption">Mã nguồn: github.com/ThaiBaBang130706/dat-ve-xem-phim<br>Tài liệu: README.md · protocol.md · docs/KIEN_TRUC.md · docs/DEMO.md</p>
+<div class="bottom"><span>Điều cần chứng minh: cùng một ghế, không bán cho hai người.</span><span>13</span></div>
+</section>
+</main>
+<div class="controls"><button id="prev" type="button">← Trước</button><span id="counter" aria-live="polite">1 / 13</span><button id="next" type="button">Tiếp →</button><button id="full" type="button">Toàn màn hình</button><button id="print" type="button">In / lưu PDF</button></div>
+<div class="hint">Dùng ←/→ hoặc Page Up/Page Down · Bấm vào thông tin nhóm ở slide đầu để sửa (lưu trong trình duyệt).</div>
+<script>
+const slides=Array.from(document.querySelectorAll('.slide'));let current=0;
+function show(index){current=Math.max(0,Math.min(slides.length-1,index));slides.forEach((slide,i)=>slide.classList.toggle('active',i===current));document.getElementById('counter').textContent=(current+1)+' / '+slides.length;document.getElementById('prev').disabled=current===0;document.getElementById('next').disabled=current===slides.length-1;location.hash=String(current+1);}
+document.getElementById('prev').onclick=()=>show(current-1);document.getElementById('next').onclick=()=>show(current+1);
+document.getElementById('full').onclick=()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();};
+document.getElementById('print').onclick=()=>window.print();
+document.addEventListener('keydown',event=>{if(event.target.isContentEditable)return;if(['ArrowRight','PageDown',' '].includes(event.key)){event.preventDefault();show(current+1);}if(['ArrowLeft','PageUp'].includes(event.key)){event.preventDefault();show(current-1);}if(event.key==='Home')show(0);if(event.key==='End')show(slides.length-1);});
+const group=document.getElementById('group');try{group.textContent=localStorage.getItem('cinema-presentation-group')||group.textContent;}catch{}
+group.addEventListener('input',()=>{try{localStorage.setItem('cinema-presentation-group',group.textContent);}catch{}});
+show(Number(location.hash.slice(1))-1||0);
+</script>
+</body>
+</html>

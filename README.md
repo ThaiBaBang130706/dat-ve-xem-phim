@@ -45,7 +45,7 @@ Mở terminal thứ ba:
 
 ~~~bash
 cd cinema-dashboard
-npm install
+npm ci
 npm start
 ~~~
 

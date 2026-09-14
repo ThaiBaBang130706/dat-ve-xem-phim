@@ -42,11 +42,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: cinema-dashboard/package-lock.json
       - name: Install dashboard dependencies
         working-directory: cinema-dashboard
-        run: |
-          npm install --no-audit --no-fund
-          node -e "console.log('CINEMA_PACKAGE_LOCK=' + JSON.stringify(require('./package-lock.json')))"
+        run: npm ci --no-audit --no-fund
       - name: Check and test dashboard
         working-directory: cinema-dashboard
         run: |

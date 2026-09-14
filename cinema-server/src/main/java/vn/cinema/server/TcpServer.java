@@ -164,7 +164,13 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
    require(d.has("seats") && d.get("seats").isJsonArray(),"Danh sách ghế không hợp lệ.");
    List<String> result=new ArrayList<>();for(JsonElement e:d.getAsJsonArray("seats"))result.add(e.getAsString());return result;
   }
-  void send(Response response){if(!closed.get() && !outgoing.offer(response))close();}
+  void send(Response response){
+   if(!closed.get() && !outgoing.offer(response)){
+    // Only interrupt I/O here. Cleanup runs in the connection threads, avoiding
+    // cross-client monitor deadlocks when two slow clients overflow together.
+    try{socket.close();}catch(IOException ignored){}
+   }
+  }
   void close(){
    if(!closed.compareAndSet(false,true))return;
    clients.remove(this);
