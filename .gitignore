@@ -1,0 +1,12 @@
+**/target/
+**/node_modules/
+.idea/
+*.iml
+.env
+data/
+*.db
+*.db-shm
+*.db-wal
+*.key
+*.log
+.DS_Store
