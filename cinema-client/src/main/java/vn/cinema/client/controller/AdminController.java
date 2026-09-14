@@ -116,10 +116,10 @@ public final class AdminController {
  }
  private void seatForm(JsonObject show){
   Dialog<ButtonType> dialog=dialog("Mở / khoá ghế · suất "+Ui.string(show,"id"));GridPane form=grid();
-  TextField seat=Ui.field("","Ví dụ B3");ComboBox<String> status=new ComboBox<>();status.getItems().addAll("AVAILABLE","UNAVAILABLE");status.getSelectionModel().selectFirst();
-  form.addRow(0,Ui.label("Ghế",null),seat);form.addRow(1,Ui.label("AVAILABLE = mở; UNAVAILABLE = khoá",null),status);
+  TextField seat=Ui.field("","Ví dụ B3");ComboBox<String> status=new ComboBox<>();status.getItems().addAll("Trống — mở bán","Tạm khoá");status.getSelectionModel().selectFirst();
+  form.addRow(0,Ui.label("Ghế",null),seat);form.addRow(1,Ui.label("Trạng thái ghế",null),status);
   dialog.getDialogPane().setContent(form);
-  wireSave(dialog,"ADMIN_SET_SEAT_STATUS",()->Json.obj("showId",Json.num(show,"id",0),"seat",seat.getText().strip().toUpperCase(Locale.ROOT),"status",status.getValue()));
+  wireSave(dialog,"ADMIN_SET_SEAT_STATUS",()->Json.obj("showId",Json.num(show,"id",0),"seat",seat.getText().strip().toUpperCase(Locale.ROOT),"status",status.getSelectionModel().getSelectedIndex()==0?"AVAILABLE":"UNAVAILABLE"));
   dialog.showAndWait();
  }
  private record Choice(long id,String label){@Override public String toString(){return label;}}

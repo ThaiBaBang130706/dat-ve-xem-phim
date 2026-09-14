@@ -18,6 +18,13 @@ jobs:
           cache: maven
       - name: Build and test Java modules
         run: xvfb-run -a mvn -B verify
+      - name: Smoke test packaged server over TCP and HTTP
+        run: |
+          mkdir -p target
+          java -jar cinema-server/target/cinema-server-1.0.0.jar --tcp-port=15000 --http-port=15001 --db=target/smoke/cinema.db > target/server-smoke.log 2>&1 &
+          CINEMA_PID=$!
+          trap 'kill "$CINEMA_PID" 2>/dev/null || true' EXIT
+          python3 scripts/smoke_lan.py
       - uses: actions/upload-artifact@v4
         with:
           name: cinema-server
@@ -37,7 +44,9 @@ jobs:
           node-version: '22'
       - name: Install dashboard dependencies
         working-directory: cinema-dashboard
-        run: npm install --no-audit --no-fund
+        run: |
+          npm install --no-audit --no-fund
+          node -e "console.log('CINEMA_PACKAGE_LOCK=' + JSON.stringify(require('./package-lock.json')))"
       - name: Check and test dashboard
         working-directory: cinema-dashboard
         run: |

@@ -27,6 +27,7 @@ public final class TcpClient implements AutoCloseable {
   timer.scheduleAtFixedRate(()->request("PING",Json.obj()).exceptionally(e->{close();return null;}),20,20,TimeUnit.SECONDS);
  }
  public String host(){return host;}
+ public int port(){return socket.getPort();}
  public void onEvent(Consumer<Response> listener){events=listener;}
  public void onDisconnect(Consumer<String> listener){disconnect=listener;}
  public CompletableFuture<JsonElement> request(String type,JsonObject data){
@@ -48,7 +49,8 @@ public final class TcpClient implements AutoCloseable {
  private void read(){
   try{
    String line;
-   while((line=JsonLineCodec.read(socket.getInputStream()))!=null){
+   InputStream input=new BufferedInputStream(socket.getInputStream());
+   while((line=JsonLineCodec.read(input))!=null){
     Response response=Json.GSON.fromJson(line,Response.class);
     if(response.id()==null){events.accept(response);continue;}
     CompletableFuture<JsonElement> future=pending.remove(response.id());

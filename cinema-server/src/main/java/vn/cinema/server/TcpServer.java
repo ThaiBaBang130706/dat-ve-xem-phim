@@ -89,7 +89,7 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
   }
   void read(){
    try{
-    InputStream in=socket.getInputStream();String line;
+    InputStream in=new BufferedInputStream(socket.getInputStream());String line;
     while(!closed.get() && (line=JsonLineCodec.read(in))!=null){
      lastSeen=System.currentTimeMillis();
      Request request=null;

@@ -68,9 +68,8 @@ public final class Database {
    exec(c,"INSERT INTO users(username,password_hash,display_name,role,created_at) VALUES(?,?,?,?,?)","user1",userHash,"Sinh viên A","USER",now);
    exec(c,"INSERT INTO users(username,password_hash,display_name,role,created_at) VALUES(?,?,?,?,?)","user2",userHash,"Sinh viên B","USER",now);
    String[] titles={"Hẹn Nhau Ở Huế","Chuyến Tàu Bình Minh","Mật Mã Đại Dương","Mùa Hè Của Chúng Ta","Ngôi Nhà Cuối Phố","Hành Trình Sao Hoả","Bức Thư Chưa Gửi","Đội Bóng Xóm Nhỏ","Bên Kia Cầu Vồng","Một Ngày Thật Khác"};
-   String[] genres={"Tình cảm","Phiêu lưu","Hành động","Học đường","Bí ẩn","Khoa học viễn tưởng","Gia đình","Hài","Hoạt hình","Tâm lý"};
-   for(int i=0;i<titles.length;i++)exec(c,"INSERT INTO movies(title,genre,duration_minutes,age_rating,description) VALUES(?,?,?,?,?)",titles[i],genres[i],105+i*2,i==4?"T16":"P","Phim minh hoạ cho đồ án CinemaBooking. Đây là dữ liệu demo, không phải lịch chiếu thương mại.");
-   exec(c,"INSERT INTO rooms(name,rows_count,cols_count) VALUES('P1',6,8),('P2',7,8),('IMAX',8,10)");
+   String catalog=new String(Objects.requireNonNull(getClass().getResourceAsStream("/seed.sql")).readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);
+   try(Statement statement=c.createStatement()){for(String sql:catalog.split(";"))if(!sql.isBlank())statement.execute(sql);}
    ZonedDateTime base=ZonedDateTime.now(clock).withZoneSameInstant(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate().plusDays(1).atStartOfDay(ZoneId.of("Asia/Ho_Chi_Minh"));
    for(int day=0;day<2;day++)for(int room=1;room<=3;room++)for(int slot=0;slot<4;slot++){
     int movie=(day*12+(room-1)*4+slot)%10+1;

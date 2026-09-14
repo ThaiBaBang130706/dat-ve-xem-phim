@@ -36,6 +36,8 @@ public final class Ui {
     JsonObject row=cell.getValue();String value=string(row,key);
     if(key.endsWith("_at") && !value.isBlank())value=date(row.get(key).getAsLong());
     if(Set.of("total_vnd","price_vnd","revenue").contains(key) && !value.isBlank())value=money(row.get(key).getAsLong());
+    if(key.equals("status") || key.equals("role"))value=switch(value){case "ACTIVE"->"Hoạt động";case "LOCKED"->"Đã khoá";case "CONFIRMED"->"Đã xác nhận";case "CANCELLED"->"Đã huỷ";case "OPEN"->"Đang bán";case "ADMIN"->"Quản trị";case "USER"->"Khách hàng";default->value;};
+    if(key.equals("active"))value=value.equals("1")?"Có":"Ngừng sử dụng";
     return new ReadOnlyStringWrapper(value);
    });
    column.setPrefWidth(key.equals("title")||key.equals("detail")?230:130);table.getColumns().add(column);

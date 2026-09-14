@@ -44,5 +44,5 @@ public final class ConnectionController {
    busy(false);statusLabel.setText(error==null?"Đã tạo tài khoản. Bấm Đăng nhập để tiếp tục.":Ui.message(error));
   }));
  }
- private void busy(boolean value){loginButton.setDisable(value);registerButton.setDisable(value);}
+ private void busy(boolean value){loginButton.setDisable(value);registerButton.setDisable(value);connectButton.setDisable(value);}
 }

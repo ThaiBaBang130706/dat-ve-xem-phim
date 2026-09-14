@@ -32,7 +32,7 @@ public final class MainController {
  private Timeline ticker;
  public void init(CinemaApp app,TcpClient client,JsonObject user){
   this.app=app;this.client=client;this.user=user;
-  userLabel.setText(Ui.string(user,"display_name"));connectionLabel.setText("● "+client.host()+":5000");
+  userLabel.setText(Ui.string(user,"display_name"));connectionLabel.setText("● "+client.host()+":"+client.port());
   boolean admin="ADMIN".equals(Ui.string(user,"role"));adminButton.setVisible(admin);adminButton.setManaged(admin);
   client.onEvent(event->Ui.run(()->event(event)));
   client.onDisconnect(message->Ui.run(()->{if(!disposed){disposed=true;Ui.error(message);app.showLogin();}}));
