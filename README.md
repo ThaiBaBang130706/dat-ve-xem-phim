@@ -4,6 +4,21 @@
 
 [![Build and test](https://github.com/ThaiBaBang130706/dat-ve-xem-phim/actions/workflows/ci.yml/badge.svg)](https://github.com/ThaiBaBang130706/dat-ve-xem-phim/actions/workflows/ci.yml)
 
+## Giao diện web NOIR — User / Admin / Server
+
+Bộ giao diện dark cinema nằm trong [cinema-web](cinema-web/README.md), gồm **26 màn hình** và UI kit chung.
+
+**Mở trên Windows / IntelliJ:**
+1. Cập nhật repo hoặc tải ZIP mới.
+2. Mở `cinema-web/index.html` bằng Chrome/Edge (nhấp đúp file trong File Explorer).
+3. Dùng thanh **User / Admin / Server / UI kit** phía trên để chuyển giao diện.
+
+Không cần chạy Java, Maven, npm hay server để thử bộ giao diện này. Muốn sửa mã nguồn tách tệp, mở `cinema-web/source.html`, chỉnh `app.js` / `styles.css`, rồi chạy `python cinema-web/bundle.py` để cập nhật bản gộp.
+
+[Design tokens](cinema-web/tokens.json) · [Bàn giao thiết kế](cinema-web/HANDOFF.md) · [Phạm vi kiểm tra](cinema-web/QA.md)
+
+**Đây là prototype web xem phim dùng dữ liệu mẫu, chưa nối backend phát phim hoặc database đặt vé.** Việc chạy JavaFX bên dưới vẫn mở ứng dụng đặt vé Java; để xem NOIR phải mở file HTML ở trên.
+
 ## Chạy nhanh
 
 Cần **JDK 17**, **Maven 3.9+** và **Node.js 22+**. Lần đầu cần Internet để tải thư viện; sau đó các máy dùng ứng dụng qua LAN. Maven tải JavaFX theo hệ điều hành, không cần cài SDK JavaFX riêng.

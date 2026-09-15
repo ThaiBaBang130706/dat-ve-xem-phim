@@ -1,0 +1,23 @@
+/* Optional CSS-first Tailwind theme mapping. Import into the host application's
+   Tailwind entry point; the standalone prototype does not depend on Tailwind. */
+@theme {
+  --color-cinema-bg: #0B0B0D;
+  --color-cinema-surface: #141418;
+  --color-cinema-raised: #1C1C22;
+  --color-cinema-border: #2A2A30;
+  --color-cinema-text: #F4F1EA;
+  --color-cinema-muted: #A6A6B1;
+  --color-cinema-accent: #E8B84A;
+  --color-cinema-success: #3DDC97;
+  --color-cinema-warning: #F5A524;
+  --color-cinema-error: #E5484D;
+  --font-cinema: Inter, "Segoe UI", Arial, sans-serif;
+  --radius-control: 8px;
+  --radius-card: 10px;
+  --radius-modal: 12px;
+  --spacing: 4px;
+  --breakpoint-md: 48rem;
+  --breakpoint-xl: 75rem;
+}
+/* Example host classes: bg-cinema-bg text-cinema-text, rounded-card,
+   grid grid-cols-12 gap-6, col-span-12 md:col-span-6 xl:col-span-3. */

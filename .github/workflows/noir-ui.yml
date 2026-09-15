@@ -1,0 +1,32 @@
+name: NOIR UI checks
+
+on:
+  push:
+    paths:
+      - 'cinema-web/**'
+      - '.github/workflows/noir-ui.yml'
+  pull_request:
+    paths:
+      - 'cinema-web/**'
+      - '.github/workflows/noir-ui.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prototype:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax and prototype state transitions
+        run: |
+          node --check cinema-web/app.js
+          node cinema-web/check.cjs
+      - name: Verify standalone HTML matches editable sources
+        run: |
+          python3 cinema-web/bundle.py
+          git diff --exit-code -- cinema-web/index.html cinema-web/app.js cinema-web/styles.css cinema-web/tokens.json
