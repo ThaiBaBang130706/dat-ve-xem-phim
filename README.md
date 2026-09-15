@@ -53,6 +53,14 @@ Mở <http://localhost:3000>, đăng nhập admin. Dashboard hiển thị doanh 
 
 Node mặc định đọc `../data/dashboard.key`. Không nhập khoá này vào trình duyệt hoặc commit khoá/database lên Git. Nên chạy Node và Java cùng máy để demo thuận tiện.
 
+## Giao diện theo tài khoản
+
+Đăng nhập **admin** sẽ mở riêng cửa sổ **Quản trị rạp**, gồm Tổng quan, Phim, Phòng chiếu, Suất chiếu, Khách hàng, Đơn đặt vé, Vé theo ghế và Nhật ký. Không hiển thị Phim đang chiếu hoặc Vé của tôi trong giao diện này.
+
+Đăng nhập **user1/user2** mở giao diện khách để chọn phim và đặt vé. Cả hai loại cửa sổ dùng chung Java server, có thể chạy đồng thời trên một máy.
+
+Quản trị có tìm kiếm, lọc trạng thái/ngày, xem chi tiết đơn và vé theo từng ghế, xem sơ đồ ghế để mở/khoá ghế trống. Xem [hướng dẫn quản trị và cập nhật bản đang chạy](docs/QUAN_TRI.md).
+
 ## Có thể làm gì?
 
 - **Khách hàng:** đăng ký, đăng nhập, tìm phim, xem nội dung/lịch chiếu, chọn tối đa 8 ghế, giữ ghế 5 phút, thanh toán demo, xem vé/QR, huỷ vé trước giờ chiếu, sửa tên và đổi mật khẩu.

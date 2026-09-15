@@ -53,6 +53,7 @@ Tất cả kiểm tra role ADMIN và status ACTIVE tại Java server.
 | ADMIN_GET_STATS | {} |
 | ADMIN_LIST_MOVIES / ADMIN_LIST_ROOMS / ADMIN_LIST_SHOWS | {} |
 | ADMIN_LIST_USERS / ADMIN_LIST_BOOKINGS / ADMIN_LIST_LOGS | {} |
+| ADMIN_LIST_TICKETS | {}; tối đa 1.000 vé ghế mới nhất, kèm mã đơn và khách hàng |
 | ADMIN_SAVE_MOVIE | {id:0,title,genre,duration_minutes,age_rating,description} |
 | ADMIN_DELETE_MOVIE | {id}; ngừng dùng, giữ lịch sử |
 | ADMIN_SAVE_ROOM | {id:0,name,rows_count,cols_count} |

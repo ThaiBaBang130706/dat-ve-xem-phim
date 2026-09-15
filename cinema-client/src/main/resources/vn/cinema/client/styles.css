@@ -62,3 +62,8 @@
 .admin-body { -fx-padding: 18px 0; }
 .tab-pane .tab-header-area .tab-header-background { -fx-background-color: #e6ebeb; }
 .tab { -fx-padding: 9px 12px; }
+
+.admin-header { -fx-background-color: #162e42; -fx-padding: 24px 30px; }
+.admin-title { -fx-text-fill: white; -fx-font-size: 26px; -fx-font-weight: bold; }
+.admin-workspace { -fx-padding: 20px 26px 6px 26px; }
+.admin-footer { -fx-padding: 10px 26px; -fx-text-fill: #667784; -fx-font-size: 12px; }

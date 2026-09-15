@@ -20,7 +20,6 @@ import vn.cinema.common.*;
 
 public final class MainController {
  @FXML private Label userLabel,connectionLabel,pageTitle,notice;
- @FXML private Button adminButton;
  @FXML private VBox content;
  private CinemaApp app;private TcpClient client;private JsonObject user;
  private boolean disposed,busy;
@@ -33,7 +32,6 @@ public final class MainController {
  public void init(CinemaApp app,TcpClient client,JsonObject user){
   this.app=app;this.client=client;this.user=user;
   userLabel.setText(Ui.string(user,"display_name"));connectionLabel.setText("● "+client.host()+":"+client.port());
-  boolean admin="ADMIN".equals(Ui.string(user,"role"));adminButton.setVisible(admin);adminButton.setManaged(admin);
   client.onEvent(event->Ui.run(()->event(event)));
   client.onDisconnect(message->Ui.run(()->{if(!disposed){disposed=true;Ui.error(message);app.showLogin();}}));
   ticker=new Timeline(new KeyFrame(Duration.seconds(1),e->countdown()));ticker.setCycleCount(Animation.INDEFINITE);ticker.play();
@@ -215,13 +213,6 @@ public final class MainController {
    VBox form=new VBox(14,Ui.label("@"+Ui.string(user,"username"),"section-title"),name,Ui.button("Lưu tên hiển thị",()->load("UPDATE_PROFILE",Json.obj("displayName",name.getText()),r->{user=r.getAsJsonObject();userLabel.setText(Ui.string(user,"display_name"));Ui.info("Đã cập nhật tên.");}),"primary"),new Separator(),old,next,Ui.button("Đổi mật khẩu",()->load("CHANGE_PASSWORD",Json.obj("oldPassword",old.getText(),"newPassword",next.getText()),r->{old.clear();next.clear();Ui.info("Đã đổi mật khẩu.");}),null));
    form.setMaxWidth(480);form.getStyleClass().add("card");content.getChildren().add(form);
   });
- }
- @FXML public void administration(){
-  if(busy)return;leaveShow();pageTitle.setText("Quản lý rạp");notice.setText("Các thay đổi được kiểm tra tại server trước khi lưu.");
-  try{
-   FXMLLoader loader=new FXMLLoader(getClass().getResource("/vn/cinema/client/admin.fxml"));Parent root=loader.load();
-   loader.<AdminController>getController().init(client,()->app.openDashboard(client.host()));VBox.setVgrow(root,Priority.ALWAYS);content.getChildren().add(root);
-  }catch(Exception e){Ui.error("Không mở được màn hình quản trị: "+e.getMessage());}
  }
  @FXML public void logout(){
   if(busy){Ui.info("Đợi yêu cầu đặt vé hiện tại hoàn tất.");return;}

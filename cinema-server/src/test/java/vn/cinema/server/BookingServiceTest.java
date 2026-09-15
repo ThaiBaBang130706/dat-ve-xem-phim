@@ -83,6 +83,20 @@ class BookingServiceTest {
   String hash=db.read(c->one(c,"SELECT password_hash FROM users WHERE username='new_student'").get("password_hash").getAsString());
   assertNotEquals("abc12345",hash);assertTrue(Passwords.verify("abc12345",hash));assertFalse(Passwords.verify("wrong",hash));
  }
+ @Test void adminCanInspectEveryTicketAndRetainCancellationHistory()throws Exception {
+  assertThrows(IllegalArgumentException.class,()->admin.handle(a,"ADMIN_LIST_TICKETS",Json.obj()));
+  service.hold(a,1,List.of("C1","C2"));
+  JsonObject booking=service.confirm(a,1,List.of("C1","C2"),"admin-inspection");
+  long id=booking.get("id").getAsLong();
+  JsonArray tickets=admin.handle(root,"ADMIN_LIST_TICKETS",Json.obj()).getAsJsonArray();
+  long count=java.util.stream.StreamSupport.stream(tickets.spliterator(),false).map(JsonElement::getAsJsonObject).filter(row->Json.num(row,"booking_id",0)==id && "ACTIVE".equals(Json.str(row,"status",""))).count();
+  assertEquals(2,count);
+  assertEquals(2,service.ticket(root,id).getAsJsonArray("tickets").size());
+  service.cancel(root,id);
+  JsonArray history=admin.handle(root,"ADMIN_LIST_TICKETS",Json.obj()).getAsJsonArray();
+  long cancelled=java.util.stream.StreamSupport.stream(history.spliterator(),false).map(JsonElement::getAsJsonObject).filter(row->Json.num(row,"booking_id",0)==id && "CANCELLED".equals(Json.str(row,"status",""))).count();
+  assertEquals(2,cancelled);assertEquals("AVAILABLE",status("C1"));
+ }
  String status(String seat)throws Exception {return db.read(c->one(c,"SELECT status FROM seats_state WHERE show_id=1 AND seat_label=?",seat).get("status").getAsString());}
  static final class MutableClock extends Clock {
   final AtomicLong now;MutableClock(long millis){now=new AtomicLong(millis);}

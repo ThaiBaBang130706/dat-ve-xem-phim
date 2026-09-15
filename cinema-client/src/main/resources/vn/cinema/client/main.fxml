@@ -12,7 +12,6 @@
    <Button text="Phim đang chiếu" onAction="#home" maxWidth="Infinity" styleClass="nav-button"/>
    <Button text="Vé của tôi" onAction="#tickets" maxWidth="Infinity" styleClass="nav-button"/>
    <Button text="Tài khoản" onAction="#account" maxWidth="Infinity" styleClass="nav-button"/>
-   <Button fx:id="adminButton" text="Quản lý rạp" onAction="#administration" maxWidth="Infinity" styleClass="nav-button"/>
    <Region VBox.vgrow="ALWAYS"/>
    <Label fx:id="userLabel" wrapText="true" styleClass="light-text"/>
    <Label fx:id="connectionLabel" wrapText="true" styleClass="light-text"/>

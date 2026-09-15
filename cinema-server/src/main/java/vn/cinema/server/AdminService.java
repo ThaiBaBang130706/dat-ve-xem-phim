@@ -21,6 +21,7 @@ public final class AdminService {
    case "ADMIN_LIST_SHOWS" -> shows();
    case "ADMIN_LIST_USERS" -> db.read(c->rows(c,"SELECT id,username,display_name,role,status,created_at FROM users ORDER BY id"));
    case "ADMIN_LIST_BOOKINGS" -> bookings();
+   case "ADMIN_LIST_TICKETS" -> tickets();
    case "ADMIN_LIST_LOGS" -> logs();
    case "ADMIN_SAVE_MOVIE" -> saveMovie(session,data);
    case "ADMIN_DELETE_MOVIE" -> archive(session,data,"movies","movie_id");
@@ -46,6 +47,9 @@ public final class AdminService {
  }
  public JsonArray bookings()throws Exception {
   return db.read(c->rows(c,"SELECT b.*,u.username,m.title,r.name AS room_name,s.starts_at,(SELECT group_concat(t.seat_label, ', ') FROM tickets t WHERE t.booking_id=b.id) AS seats FROM bookings b JOIN users u ON u.id=b.user_id JOIN showtimes s ON s.id=b.show_id JOIN movies m ON m.id=s.movie_id JOIN rooms r ON r.id=s.room_id ORDER BY b.id DESC LIMIT 500"));
+ }
+ public JsonArray tickets()throws Exception {
+  return db.read(c->rows(c,"SELECT t.*,b.code,b.created_at,b.status AS booking_status,u.username FROM tickets t JOIN bookings b ON b.id=t.booking_id JOIN users u ON u.id=b.user_id ORDER BY t.id DESC LIMIT 1000"));
  }
  public JsonArray logs()throws Exception {
   return db.read(c->rows(c,"SELECT l.id,l.created_at,COALESCE(u.username,'system') AS username,l.action,l.detail FROM logs l LEFT JOIN users u ON u.id=l.user_id ORDER BY l.id DESC LIMIT 200"));
