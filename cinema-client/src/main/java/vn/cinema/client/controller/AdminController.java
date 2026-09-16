@@ -15,6 +15,9 @@ import vn.cinema.common.Json;
 
 public final class AdminController {
  @FXML private TabPane tabs;
+ @FXML private VBox navigation;
+ @FXML private Label sectionLabel;
+ private final List<Button> navigationButtons=new ArrayList<>();
  @FXML private Button dashboardButton;
  private TcpClient client;
  private Runnable dashboard;
@@ -25,7 +28,10 @@ public final class AdminController {
  public void init(TcpClient client,Runnable dashboard){
   this.client=client;this.dashboard=dashboard;
   String[] names={"Tổng quan","Phim","Phòng chiếu","Suất chiếu","Khách hàng","Đơn đặt vé","Vé theo ghế","Nhật ký"};
-  for(String name:names){Tab tab=new Tab(name);tab.setClosable(false);tabs.getTabs().add(tab);}
+  for(int i=0;i<names.length;i++){
+   String name=names[i];int index=i;Tab tab=new Tab(name);tab.setClosable(false);tabs.getTabs().add(tab);
+   Button button=Ui.button(name,()->tabs.getSelectionModel().select(index),"nav-button");button.setMaxWidth(Double.MAX_VALUE);navigation.getChildren().add(button);navigationButtons.add(button);
+  }
   tabs.getSelectionModel().selectedIndexProperty().addListener((o,a,b)->refresh());refresh();
  }
  public void dispose(){disposed=true;refreshVersion++;for(Dialog<?> dialog:List.copyOf(openDialogs))dialog.close();}
@@ -37,6 +43,8 @@ public final class AdminController {
   if(disposed)return;
   long version=++refreshVersion;
   int index=tabs.getSelectionModel().getSelectedIndex();if(index<0)return;
+  sectionLabel.setText(tabs.getTabs().get(index).getText());
+  for(int i=0;i<navigationButtons.size();i++){Button b=navigationButtons.get(i);b.getStyleClass().remove("nav-active");if(i==index)b.getStyleClass().add("nav-active");}
   Tab tab=tabs.getTabs().get(index);VBox body=new VBox(12);body.getStyleClass().add("admin-body");tab.setContent(body);
   String[] commands={"ADMIN_GET_STATS","ADMIN_LIST_MOVIES","ADMIN_LIST_ROOMS","ADMIN_LIST_SHOWS","ADMIN_LIST_USERS","ADMIN_LIST_BOOKINGS","ADMIN_LIST_TICKETS","ADMIN_LIST_LOGS"};
   request(client.request(commands[index],Json.obj()),value->{
@@ -81,7 +89,11 @@ public final class AdminController {
  private void stats(VBox body,JsonObject data){
   FlowPane cards=new FlowPane(12,12);
   cards.getChildren().addAll(stat("Doanh thu demo",Ui.money(Json.num(data,"revenue",0))),stat("Đơn đã xác nhận",Ui.string(data,"bookings")),stat("Vé còn hiệu lực",Ui.string(data,"tickets")),stat("Ghế đang giữ",Ui.string(data,"heldSeats")),stat("Khách hàng",Ui.string(data,"users")));
-  body.getChildren().addAll(cards,Ui.label("Doanh thu theo ngày · 7 ngày gần nhất","section-title"),Ui.table(data.getAsJsonArray("daily"),"day","Ngày","bookings","Số đơn","revenue","Doanh thu"));
+  javafx.scene.chart.CategoryAxis days=new javafx.scene.chart.CategoryAxis();javafx.scene.chart.NumberAxis amount=new javafx.scene.chart.NumberAxis();
+  javafx.scene.chart.BarChart<String,Number> chart=new javafx.scene.chart.BarChart<>(days,amount);chart.setAnimated(false);chart.setLegendVisible(false);chart.setPrefHeight(220);chart.setMinHeight(140);amount.setLabel("VND");
+  javafx.scene.chart.XYChart.Series<String,Number> series=new javafx.scene.chart.XYChart.Series<>();
+  for(JsonElement e:data.getAsJsonArray("daily")){JsonObject row=e.getAsJsonObject();series.getData().add(new javafx.scene.chart.XYChart.Data<>(Ui.string(row,"day"),Json.num(row,"revenue",0)));}chart.getData().add(series);
+  body.getChildren().addAll(cards,Ui.label("Doanh thu theo ngày · 7 ngày gần nhất","section-title"),chart,Ui.table(data.getAsJsonArray("daily"),"day","Ngày","bookings","Số đơn","revenue","Doanh thu"));
  }
  private VBox stat(String label,String value){VBox box=new VBox(8,Ui.label(label,"muted"),Ui.label(value,"section-title"));box.getStyleClass().add("card");box.setPrefWidth(185);return box;}
  private void selected(TableView<JsonObject> table,Consumer<JsonObject> action){JsonObject row=table.getSelectionModel().getSelectedItem();if(row==null)Ui.info("Chọn một dòng trong bảng.");else action.accept(row);}
@@ -219,7 +231,7 @@ public final class AdminController {
   for(JsonElement e:items){JsonObject item=e.getAsJsonObject();if(Json.num(item,"active",0)==1){Choice choice=new Choice(Json.num(item,"id",0),Ui.string(item,label));box.getItems().add(choice);if(choice.id()==selected)box.setValue(choice);}}
   if(box.getValue()==null)box.getSelectionModel().selectFirst();return box;
  }
- private Dialog<ButtonType> dialog(String title){Dialog<ButtonType> d=new Dialog<>();d.setTitle(title);d.getDialogPane().getButtonTypes().addAll(ButtonType.OK,ButtonType.CANCEL);d.getDialogPane().setPrefWidth(650);openDialogs.add(d);d.setOnHidden(e->openDialogs.remove(d));return d;}
+ private Dialog<ButtonType> dialog(String title){Dialog<ButtonType> d=Ui.themed(new Dialog<>());d.setTitle(title);d.getDialogPane().getButtonTypes().addAll(ButtonType.OK,ButtonType.CANCEL);d.getDialogPane().setPrefWidth(650);openDialogs.add(d);d.setOnHidden(e->openDialogs.remove(d));return d;}
  private GridPane grid(){GridPane p=new GridPane();p.setHgap(16);p.setVgap(14);p.setPadding(new javafx.geometry.Insets(20));return p;}
  private void wireSave(Dialog<ButtonType> dialog,String command,Supplier<JsonObject> payload){
   Button save=(Button)dialog.getDialogPane().lookupButton(ButtonType.OK);save.setText("Lưu");
@@ -234,3 +246,4 @@ public final class AdminController {
   });
  }
 }
+

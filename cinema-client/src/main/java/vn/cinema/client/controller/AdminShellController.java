@@ -38,7 +38,7 @@ public final class AdminShellController {
   client.request("LOGOUT",Json.obj()).whenComplete((value,error)->Ui.run(()->{if(!disposed){dispose();app.showLogin();}}));
  }
  @FXML private void profile(){
-  Dialog<Void> dialog=new Dialog<>();dialog.setTitle("Tài khoản quản trị");
+  Dialog<Void> dialog=Ui.themed(new Dialog<>());dialog.setTitle("Tài khoản quản trị");
   dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
   TextField name=Ui.field(Ui.string(user,"display_name"),"Tên hiển thị");
   PasswordField oldPassword=new PasswordField(),newPassword=new PasswordField();
@@ -54,3 +54,4 @@ public final class AdminShellController {
   form.setPadding(new javafx.geometry.Insets(20));form.setPrefWidth(420);dialog.getDialogPane().setContent(form);dialog.showAndWait();
  }
 }
+

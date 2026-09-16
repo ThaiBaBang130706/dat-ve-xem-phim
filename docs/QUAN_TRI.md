@@ -40,8 +40,8 @@ GitHub không tự cập nhật thư mục đã giải nén trên máy.
 5. Reload Maven trong IntelliJ.
 6. Chạy cấu hình build ở thư mục gốc, lệnh **clean install -DskipTests**, chờ BUILD SUCCESS.
 7. Chạy lại cấu hình JAR server, sau đó Maven client với **javafx:run**.
-8. Đăng nhập admin: tiêu đề cửa sổ phải là **CinemaBooking · Quản trị rạp** và có 8 tab quản trị.
+8. Đăng nhập admin: tiêu đề cửa sổ phải là **CinemaBooking · Quản trị rạp** và có 8 mục quản trị trong sidebar.
 
 Nếu thấy menu Phim đang chiếu và Vé của tôi khi đăng nhập admin, anh vẫn đang chạy bản client cũ. Kiểm tra working directory của cấu hình Maven có trỏ đúng thư mục vừa cập nhật không.
 
-Server Java hiện vẫn chạy dạng console; giao diện quản trị này điều hành dữ liệu rạp qua TCP, chưa phải cửa sổ khởi động/dừng tiến trình server.
+Server đã có cửa sổ JavaFX vận hành trong module cinema-operator, cấu hình 02_Server_GUI. Xem [hướng dẫn IntelliJ](CHAY_INTELLIJ.md).

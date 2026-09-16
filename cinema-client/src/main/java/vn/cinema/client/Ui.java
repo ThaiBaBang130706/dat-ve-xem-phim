@@ -20,9 +20,10 @@ public final class Ui {
   request.whenComplete((value,error)->run(()->{if(error!=null)error(message(error));else success.accept(value);}));
  }
  public static String message(Throwable error){while(error.getCause()!=null)error=error.getCause();return error.getMessage()==null?"Chưa xử lý được yêu cầu.":error.getMessage();}
- public static void error(String text){new Alert(Alert.AlertType.ERROR,text,ButtonType.OK).show();}
- public static void info(String text){new Alert(Alert.AlertType.INFORMATION,text,ButtonType.OK).show();}
- public static boolean confirm(String text){return new Alert(Alert.AlertType.CONFIRMATION,text,ButtonType.OK,ButtonType.CANCEL).showAndWait().orElse(ButtonType.CANCEL)==ButtonType.OK;}
+ public static <T extends Dialog<?>> T themed(T dialog){dialog.getDialogPane().getStylesheets().add(Ui.class.getResource("/vn/cinema/client/styles.css").toExternalForm());return dialog;}
+ public static void error(String text){themed(new Alert(Alert.AlertType.ERROR,text,ButtonType.OK)).show();}
+ public static void info(String text){themed(new Alert(Alert.AlertType.INFORMATION,text,ButtonType.OK)).show();}
+ public static boolean confirm(String text){return themed(new Alert(Alert.AlertType.CONFIRMATION,text,ButtonType.OK,ButtonType.CANCEL)).showAndWait().orElse(ButtonType.CANCEL)==ButtonType.OK;}
  public static Label label(String text,String style){Label l=new Label(text);if(style!=null)l.getStyleClass().add(style);l.setWrapText(true);return l;}
  public static Button button(String text,Runnable action,String style){Button b=new Button(text);if(style!=null)b.getStyleClass().add(style);b.setOnAction(e->action.run());return b;}
  public static String money(long n){return String.format(Locale.forLanguageTag("vi-VN"),"%,d đ",n);}
@@ -48,3 +49,4 @@ public final class Ui {
  }
  public static TextField field(String value,String prompt){TextField f=new TextField(value);f.setPromptText(prompt);f.setMaxWidth(Double.MAX_VALUE);return f;}
 }
+

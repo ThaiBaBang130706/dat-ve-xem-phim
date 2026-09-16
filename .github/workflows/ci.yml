@@ -8,13 +8,16 @@ permissions:
 jobs:
   java:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [17, 22]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: ${{ matrix.java }}
           cache: maven
       - name: Build and test Java modules
         run: xvfb-run -a mvn -B verify
@@ -27,13 +30,18 @@ jobs:
           python3 scripts/smoke_lan.py
       - uses: actions/upload-artifact@v4
         with:
-          name: cinema-server
+          name: cinema-server-jdk-${{ matrix.java }}
           path: cinema-server/target/cinema-server-1.0.0.jar
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-reports
+          name: test-reports-jdk-${{ matrix.java }}
           path: '**/target/surefire-reports/*'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: javafx-preview-jdk-${{ matrix.java }}
+          path: '**/target/ui-preview/*.png'
   dashboard:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -56,3 +64,4 @@ jobs:
         with:
           name: dashboard-dependency-lock
           path: cinema-dashboard/package-lock.json
+

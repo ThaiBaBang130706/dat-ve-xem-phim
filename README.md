@@ -4,24 +4,27 @@
 
 [![Build and test](https://github.com/ThaiBaBang130706/dat-ve-xem-phim/actions/workflows/ci.yml/badge.svg)](https://github.com/ThaiBaBang130706/dat-ve-xem-phim/actions/workflows/ci.yml)
 
-## Giao diện web NOIR — User / Admin / Server
+## Bản chính: Java TCP + JavaFX / NOIR
 
-Bộ giao diện dark cinema nằm trong [cinema-web](cinema-web/README.md), gồm **26 màn hình** và UI kit chung.
+Đồ án đặt vé rạp có **ba cửa sổ JavaFX**: vận hành server, khách đặt vé và admin quản lý rạp. Giao diện nền tối/vàng ấm; dữ liệu đến từ TCP server và SQLite. Admin và khách được điều hướng riêng theo quyền do server xác thực.
 
-**Mở trên Windows / IntelliJ:**
-1. Cập nhật repo hoặc tải ZIP mới.
-2. Mở `cinema-web/index.html` bằng Chrome/Edge (nhấp đúp file trong File Explorer).
-3. Dùng thanh **User / Admin / Server / UI kit** phía trên để chuyển giao diện.
+**Trong IntelliJ, mở pom.xml gốc rồi Reload Maven. Chọn JDK 22.0.2 (hoặc 17+), Maven Bundled.** Repo có sẵn các cấu hình trong `.run`:
 
-Không cần chạy Java, Maven, npm hay server để thử bộ giao diện này. Muốn sửa mã nguồn tách tệp, mở `cinema-web/source.html`, chỉnh `app.js` / `styles.css`, rồi chạy `python cinema-web/bundle.py` để cập nhật bản gộp.
+1. **01_Build** → đợi BUILD SUCCESS.
+2. **02_Server_GUI** → bấm **Khởi động server** (TCP 5000, HTTP 5001).
+3. **03_Client_A** → Kết nối 127.0.0.1:5000 → user1 / User@1234.
+4. **04_Client_B** → user2 / User@1234 để thử nhiều khách.
+5. **05_Admin** → admin / Admin@123 để vào sidebar quản trị.
 
-[Design tokens](cinema-web/tokens.json) · [Bàn giao thiết kế](cinema-web/HANDOFF.md) · [Phạm vi kiểm tra](cinema-web/QA.md)
+Không chạy thêm JAR server khi server GUI đang hoạt động. Không cần mở HTML để thấy giao diện NOIR trong ứng dụng Java.
 
-**Đây là prototype web xem phim dùng dữ liệu mẫu, chưa nối backend phát phim hoặc database đặt vé.** Việc chạy JavaFX bên dưới vẫn mở ứng dụng đặt vé Java; để xem NOIR phải mở file HTML ở trên.
+[Hướng dẫn cập nhật và chạy IntelliJ](docs/CHAY_INTELLIJ.md) · [Kịch bản bảo vệ](docs/KICH_BAN_BAO_VE.md)
 
-## Chạy nhanh
+Thư mục [cinema-web](cinema-web/README.md) là prototype tham khảo, chưa nối backend. Các mục streaming trong mẫu web không thuộc phạm vi đồ án đặt vé.
 
-Cần **JDK 17**, **Maven 3.9+** và **Node.js 22+**. Lần đầu cần Internet để tải thư viện; sau đó các máy dùng ứng dụng qua LAN. Maven tải JavaFX theo hệ điều hành, không cần cài SDK JavaFX riêng.
+## Chạy bằng terminal (tuỳ chọn, server console)
+
+Cần **JDK 17 trở lên (hỗ trợ JDK 22)**, **Maven 3.9+** và **Node.js 22+**. Lần đầu cần Internet để tải thư viện; sau đó các máy dùng ứng dụng qua LAN. Maven tải JavaFX theo hệ điều hành, không cần cài SDK JavaFX riêng.
 
 Mở terminal tại thư mục gốc repo:
 
@@ -132,3 +135,4 @@ Kiểm thử gồm tranh ghế, rollback khi ghế bận, hết hạn giữ, ng�
 Một Java server quản lý một database SQLite; đây là **Client/Server**, chưa có cụm server dự phòng. Giới hạn 64 kết nối TCP. Mật khẩu được băm PBKDF2, nhưng TCP/HTTP của bản LAN chưa có TLS; dùng tài khoản mẫu trong mạng thực hành.
 
 QR chứa mã vé demo, chưa có ứng dụng quét soát vé hoặc cổng thanh toán thật. Một suất có một mức giá, chưa tính ghế VIP, bắp nước, khuyến mãi. Poster dùng thẻ chữ để mở được khi không có Internet.
+

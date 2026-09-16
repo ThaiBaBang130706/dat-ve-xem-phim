@@ -16,12 +16,10 @@ public final class ServerMain {
    else if(arg.equals("--help")){System.out.println("java -jar cinema-server.jar [--tcp-port=5000] [--http-port=5001] [--db=data/cinema.db] [--no-seed]");return;}
    else throw new IllegalArgumentException("Tham số chưa hỗ trợ: "+arg);
   }
-  Clock clock=Clock.systemUTC();Database db=new Database(database);if(seed)db.seed(clock);
-  TcpServer tcp=new TcpServer(db,clock,tcpPort);
-  HttpBridge bridge=new HttpBridge(tcp,httpPort,database.toAbsolutePath().getParent().resolve("dashboard.key"));
-  Runtime.getRuntime().addShutdownHook(new Thread(()->{bridge.close();tcp.close();},"cinema-shutdown"));
-  tcp.start();bridge.start();
-  System.out.println("CinemaBooking | TCP "+tcp.port()+" | HTTP "+bridge.port()+" | DB "+database.toAbsolutePath());
+  ServerRuntime runtime=new ServerRuntime();
+  Runtime.getRuntime().addShutdownHook(new Thread(runtime::close,"cinema-shutdown"));
+  runtime.start(database,tcpPort,httpPort,seed);
+  System.out.println("CinemaBooking | TCP "+runtime.tcpPort()+" | HTTP "+runtime.httpPort()+" | DB "+database.toAbsolutePath());
   System.out.println("Dashboard đọc khoá từ file dashboard.key bên cạnh database.");
   new CountDownLatch(1).await();
  }

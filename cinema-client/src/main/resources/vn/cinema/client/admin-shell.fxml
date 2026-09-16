@@ -7,7 +7,7 @@
   <VBox spacing="10" styleClass="admin-header">
    <HBox spacing="18" alignment="CENTER_LEFT">
     <VBox spacing="5">
-     <Label text="CB / QUẢN TRỊ RẠP" styleClass="brand"/>
+     <Label text="NOIR / QUẢN TRỊ RẠP" styleClass="brand"/>
      <Label text="Điều hành rạp phim" styleClass="admin-title"/>
     </VBox>
     <Region HBox.hgrow="ALWAYS"/>
@@ -27,6 +27,7 @@
   </VBox>
  </center>
  <bottom>
-  <Label text="CinemaBooking · Quản trị dữ liệu toàn rạp · Thanh toán mô phỏng" styleClass="admin-footer"/>
+  <Label text="NOIR Cinema · Quản trị dữ liệu toàn rạp · Thanh toán mô phỏng" styleClass="admin-footer"/>
  </bottom>
 </BorderPane>
+

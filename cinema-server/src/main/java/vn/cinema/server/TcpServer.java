@@ -20,6 +20,18 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
  private final Set<Client> clients=ConcurrentHashMap.newKeySet();
  private final ScheduledExecutorService scheduler=Executors.newSingleThreadScheduledExecutor(r->daemon(r,"cinema-maintenance"));
  private volatile boolean running=true;
+ private final java.util.concurrent.atomic.AtomicLong requests=new java.util.concurrent.atomic.AtomicLong(), errors=new java.util.concurrent.atomic.AtomicLong();
+ private final Deque<JsonObject> events=new ArrayDeque<>();
+ private synchronized void record(String action,String detail){
+  events.addFirst(Json.obj("created_at",System.currentTimeMillis(),"action",action,"detail",detail));
+  while(events.size()>200)events.removeLast();
+ }
+ public synchronized JsonObject operations(){
+  JsonArray connections=new JsonArray(), journal=new JsonArray();
+  for(Client c:clients)connections.add(Json.obj("connection",c.connectionId.substring(0,8),"address",c.socket.getRemoteSocketAddress().toString(),"username",c.username,"role",c.role,"connected_at",c.connectedAt,"last_seen_at",c.lastSeen,"show",c.subscribedShow));
+  events.forEach(e->journal.add(e.deepCopy()));
+  return Json.obj("clients",connections,"events",journal,"requests",requests.get(),"errors",errors.get());
+ }
  public TcpServer(Database db,Clock clock,int port)throws IOException {
   auth=new AuthService(db,clock);booking=new BookingService(db,clock);admin=new AdminService(db,clock,booking);
   booking.setEvents(this);
@@ -44,7 +56,7 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
    Socket socket=listener.accept();
    if(clients.size()>=64){socket.close();continue;}
    socket.setTcpNoDelay(true);socket.setSoTimeout(60_000);
-   Client client=new Client(socket);clients.add(client);client.start();
+   Client client=new Client(socket);clients.add(client);client.start();record("CONNECT",socket.getRemoteSocketAddress().toString());
   }catch(IOException e){if(running)LOG.warn("Lỗi nhận kết nối",e);}
  }
  @Override public void seatsChanged(long show){
@@ -70,6 +82,8 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
   private final BlockingQueue<Response> outgoing=new ArrayBlockingQueue<>(128);
   private final AtomicBoolean closed=new AtomicBoolean();
   private volatile Session session;
+  private volatile String username="Chưa đăng nhập",role="—";
+  private final long connectedAt=System.currentTimeMillis();
   private volatile String token;
   private volatile long subscribedShow,lastSeen=System.currentTimeMillis();
   private Thread writer;
@@ -92,15 +106,20 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
     InputStream in=new BufferedInputStream(socket.getInputStream());String line;
     while(!closed.get() && (line=JsonLineCodec.read(in))!=null){
      lastSeen=System.currentTimeMillis();
+     requests.incrementAndGet();
      Request request=null;
      try{
       request=Json.GSON.fromJson(line,Request.class);
       require(request!=null && request.id()!=null && request.id().length()>=1 && request.id().length()<=64,"Thiếu mã yêu cầu.");
       require(request.type()!=null && request.type().length()<=64,"Thiếu loại yêu cầu.");
-      send(Response.ok(request,handle(request)));
+      Object result=handle(request);
+      send(Response.ok(request,result));
+      if(!request.type().equals("PING"))record(request.type(),username+" · OK");
      }catch(IllegalArgumentException|IllegalStateException e){
+      errors.incrementAndGet();record("REJECT",username+" · "+(request==null?"INVALID_JSON":request.type()));
       send(Response.error(request==null?null:request.id(),request==null?"ERROR":request.type(),e.getMessage()==null?"JSON không hợp lệ.":e.getMessage()));
      }catch(Exception e){
+      errors.incrementAndGet();record("ERROR",username+" · lỗi xử lý yêu cầu");
       LOG.error("Không xử lý được yêu cầu {}",request==null?"UNKNOWN":request.type(),e);
       send(Response.error(request==null?null:request.id(),request==null?"ERROR":request.type(),"Server chưa xử lý được yêu cầu. Vui lòng thử lại."));
      }
@@ -119,6 +138,7 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
     require(++authAttempts<=10,"Thử đăng nhập quá nhiều. Chờ 1 phút rồi thử lại.");
     if(type.equals("REGISTER"))return auth.register(d);
     JsonObject user=auth.login(d,false);
+    username=Json.str(user,"username","");role=Json.str(user,"role","");
     session=new Session(user.get("id").getAsLong(),connectionId);
     token=UUID.randomUUID().toString();
     return Json.obj("token",token,"user",user);
@@ -131,7 +151,7 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
     return result;
    }
    return switch(type){
-    case "LOGOUT" -> {booking.disconnect(session);session=null;token=null;subscribedShow=0;yield Json.obj();}
+    case "LOGOUT" -> {booking.disconnect(session);session=null;token=null;subscribedShow=0;username="Chưa đăng nhập";role="—";yield Json.obj();}
     case "GET_PROFILE" -> auth.profile(session);
     case "UPDATE_PROFILE" -> auth.update(session,d);
     case "CHANGE_PASSWORD" -> auth.changePassword(session,d);
@@ -173,10 +193,11 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
   }
   void close(){
    if(!closed.compareAndSet(false,true))return;
-   clients.remove(this);
+   clients.remove(this);record("DISCONNECT",username+" · "+socket.getRemoteSocketAddress());
    try{socket.close();}catch(IOException ignored){}
    if(writer!=null)writer.interrupt();
    synchronized(this){try{booking.disconnect(session);}catch(Exception e){LOG.error("Không thể trả ghế khi ngắt kết nối",e);}}
   }
  }
 }
+

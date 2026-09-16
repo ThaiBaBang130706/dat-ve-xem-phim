@@ -1,30 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.geometry.Insets?>
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.cinema.client.controller.MainController" styleClass="page">
- <left>
-  <VBox spacing="14" prefWidth="215" styleClass="sidebar">
-   <padding><Insets top="32" left="20" right="20" bottom="24"/></padding>
-   <Label text="CB / CINEMA" styleClass="brand"/>
-   <Label text="Hẹn nhau ở rạp" styleClass="light-text"/>
-   <Separator/>
-   <Button text="Phim đang chiếu" onAction="#home" maxWidth="Infinity" styleClass="nav-button"/>
-   <Button text="Vé của tôi" onAction="#tickets" maxWidth="Infinity" styleClass="nav-button"/>
-   <Button text="Tài khoản" onAction="#account" maxWidth="Infinity" styleClass="nav-button"/>
-   <Region VBox.vgrow="ALWAYS"/>
-   <Label fx:id="userLabel" wrapText="true" styleClass="light-text"/>
-   <Label fx:id="connectionLabel" wrapText="true" styleClass="light-text"/>
-   <Button text="Đăng xuất" onAction="#logout" maxWidth="Infinity"/>
-  </VBox>
- </left>
- <center>
-  <BorderPane>
-   <top><VBox spacing="5" styleClass="topbar">
-    <Label fx:id="pageTitle" text="Phim đang chiếu" styleClass="page-title"/>
-    <Label fx:id="notice" text="Chọn phim để xem lịch chiếu." styleClass="muted" wrapText="true"/>
-   </VBox></top>
-   <center><VBox fx:id="content" spacing="16" styleClass="content"/></center>
-  </BorderPane>
- </center>
+ <top><VBox spacing="14" styleClass="user-header">
+  <HBox alignment="CENTER_LEFT" spacing="22">
+   <Label text="NOIR / CINEMA" styleClass="brand"/>
+   <Label text="Hẹn nhau ở rạp" styleClass="muted"/>
+   <Region HBox.hgrow="ALWAYS"/>
+   <Label fx:id="userLabel" styleClass="light-text"/>
+   <Label fx:id="connectionLabel" styleClass="legend-available"/>
+   <Button text="Đăng xuất" onAction="#logout"/>
+  </HBox>
+  <HBox spacing="12">
+   <Button text="Phim đang chiếu" onAction="#home" styleClass="nav-button"/>
+   <Button text="Vé của tôi" onAction="#tickets" styleClass="nav-button"/>
+   <Button text="Tài khoản" onAction="#account" styleClass="nav-button"/>
+   <Region HBox.hgrow="ALWAYS"/><Label text="ĐẶT VÉ RẠP · TCP / LAN" styleClass="eyebrow"/>
+  </HBox>
+ </VBox></top>
+ <center><BorderPane>
+  <top><VBox spacing="5" styleClass="topbar"><Label fx:id="pageTitle" styleClass="page-title"/><Label fx:id="notice" wrapText="true" styleClass="muted"/></VBox></top>
+  <center><VBox fx:id="content" spacing="16" styleClass="content"/></center>
+ </BorderPane></center>
 </BorderPane>

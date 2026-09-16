@@ -5,11 +5,11 @@
 <HBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.cinema.client.controller.ConnectionController" styleClass="page">
  <VBox prefWidth="480" spacing="24" styleClass="login-brand">
   <padding><Insets top="72" left="52" right="45" bottom="52"/></padding>
-  <Label text="CB / CINEMA BOOKING" styleClass="brand"/>
-  <Label text="Một chỗ ngồi.&#10;Một buổi xem phim." styleClass="login-title" wrapText="true"/>
+  <Label text="NOIR / CINEMA BOOKING" styleClass="brand"/>
+  <Label text="Một bộ phim.&#10;Một cuộc hẹn." styleClass="login-title" wrapText="true"/>
   <Label text="Chọn phim, rủ bạn cùng xem và giữ ghế ngay trên mạng nội bộ của rạp." wrapText="true" styleClass="light-text"/>
   <Region VBox.vgrow="ALWAYS"/>
-  <Label text="Đồ án Lập trình mạng · Java TCP" styleClass="light-text"/>
+  <Label text="ĐỒ ÁN LẬP TRÌNH MẠNG · TCP / LAN" styleClass="light-text"/>
   <Label text="Dữ liệu và thanh toán trong ứng dụng là mô phỏng phục vụ buổi thực hành." wrapText="true" styleClass="light-text"/>
  </VBox>
  <VBox spacing="18" HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
@@ -27,10 +27,11 @@
    <TextField fx:id="usernameField" promptText="Tên đăng nhập"/>
    <PasswordField fx:id="passwordField" promptText="Mật khẩu (ít nhất 8 ký tự)" onAction="#login"/>
    <Button fx:id="loginButton" text="Đăng nhập" onAction="#login" maxWidth="Infinity" styleClass="primary"/>
-   <Label text="Chưa có tài khoản? Điền thêm tên hiển thị để đăng ký." wrapText="true" styleClass="muted"/>
+   <Label text="Khách và admin đăng nhập bằng tài khoản riêng. Đăng ký mới luôn là khách hàng." wrapText="true" styleClass="muted"/>
    <TextField fx:id="nameField" promptText="Tên hiển thị (dùng khi đăng ký)"/>
    <Button fx:id="registerButton" text="Tạo tài khoản" onAction="#register" maxWidth="Infinity"/>
   </VBox>
   <Label fx:id="statusLabel" text="Chưa kết nối." wrapText="true" styleClass="status"/>
  </VBox>
 </HBox>
+

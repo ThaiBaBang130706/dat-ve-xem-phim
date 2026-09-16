@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+ <modelVersion>4.0.0</modelVersion>
+ <parent><groupId>vn.cinema</groupId><artifactId>cinema-booking</artifactId><version>1.0.0</version></parent>
+ <artifactId>cinema-operator</artifactId>
+ <dependencies>
+  <dependency><groupId>vn.cinema</groupId><artifactId>cinema-server</artifactId><version>${project.version}</version></dependency>
+  <dependency><groupId>vn.cinema</groupId><artifactId>cinema-client</artifactId><version>${project.version}</version></dependency>
+  <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+ </dependencies>
+ <build><plugins><plugin><groupId>org.openjfx</groupId><artifactId>javafx-maven-plugin</artifactId><version>0.0.8</version><configuration><mainClass>vn.cinema.operator.Main</mainClass></configuration></plugin></plugins></build>
+</project>

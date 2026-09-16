@@ -79,5 +79,51 @@ class FxmlTest {
   int port(){return listener.getLocalPort();}
   public void close()throws Exception{listener.close();if(socket!=null)socket.close();}
  }
+ @Test void realTcpCustomerJourneyAndAdminWorkspace()throws Exception {
+  java.nio.file.Path folder=java.nio.file.Files.createTempDirectory("noir-ui-");
+  vn.cinema.server.ServerRuntime server=new vn.cinema.server.ServerRuntime();
+  server.start(folder.resolve("cinema.db"),0,0,true);
+  CinemaApp app=new CinemaApp();javafx.stage.Stage stage=fx(()->new javafx.stage.Stage());
+  try(vn.cinema.client.net.TcpClient customer=new vn.cinema.client.net.TcpClient("127.0.0.1",server.tcpPort());vn.cinema.client.net.TcpClient other=new vn.cinema.client.net.TcpClient("127.0.0.1",server.tcpPort());vn.cinema.client.net.TcpClient admin=new vn.cinema.client.net.TcpClient("127.0.0.1",server.tcpPort())){
+   com.google.gson.JsonObject user=customer.request("LOGIN",vn.cinema.common.Json.obj("username","user1","password","User@1234")).get(5,TimeUnit.SECONDS).getAsJsonObject().getAsJsonObject("user");
+   other.request("LOGIN",vn.cinema.common.Json.obj("username","user2","password","User@1234")).get(5,TimeUnit.SECONDS);
+   fx(()->{app.start(stage);app.loggedIn(customer,user);return null;});
+   awaitButton(stage,"Xem lịch chiếu");fx(()->{screenshot(stage,"customer-home");button(stage,"Xem lịch chiếu").fire();return null;});
+   awaitButton(stage,"Chọn ghế");fx(()->{button(stage,"Chọn ghế").fire();return null;});awaitButton(stage,"B3");
+   fx(()->{button(stage,"B3").fire();button(stage,"Giữ ghế · 5 phút").fire();return null;});
+   long limit=System.nanoTime()+TimeUnit.SECONDS.toNanos(10);
+   while(fx(()->button(stage,"Thanh toán mô phỏng").isDisabled())&&System.nanoTime()<limit)Thread.sleep(40);
+   assertFalse(fx(()->button(stage,"Thanh toán mô phỏng").isDisabled()));
+   long show=customer.request("GET_SHOWTIMES",vn.cinema.common.Json.obj("movieId",1)).get(5,TimeUnit.SECONDS).getAsJsonArray().get(0).getAsJsonObject().get("id").getAsLong();
+   assertThrows(ExecutionException.class,()->other.request("HOLD_SEATS",vn.cinema.common.Json.obj("showId",show,"seats",java.util.List.of("B3"))).get(5,TimeUnit.SECONDS));
+   fx(()->{screenshot(stage,"customer-seats");return null;});
+   customer.request("CONFIRM_BOOKING",vn.cinema.common.Json.obj("showId",show,"seats",java.util.List.of("B3"),"requestId","ui-flow-unique-request")).get(5,TimeUnit.SECONDS);
+   fx(()->{button(stage,"Vé của tôi").fire();return null;});awaitButton(stage,"Xem vé / QR");
+   com.google.gson.JsonObject manager=admin.request("LOGIN",vn.cinema.common.Json.obj("username","admin","password","Admin@123")).get(5,TimeUnit.SECONDS).getAsJsonObject().getAsJsonObject("user");
+   fx(()->{app.showLogin();app.loggedIn(admin,manager);return null;});awaitButton(stage,"Phim");
+   fx(()->{button(stage,"Phim").fire();return null;});awaitButton(stage,"Thêm mới");
+   fx(()->{screenshot(stage,"admin-movies");return null;});
+   assertThrows(ExecutionException.class,()->other.request("ADMIN_LIST_USERS",vn.cinema.common.Json.obj()).get(5,TimeUnit.SECONDS));
+   fx(()->{app.stop();stage.hide();return null;});
+  }finally{fx(()->{app.stop();stage.hide();return null;});server.close();}
+ }
+ private static <T>T fx(java.util.concurrent.Callable<T> work)throws Exception{
+  CompletableFuture<T> result=new CompletableFuture<>();Platform.runLater(()->{try{result.complete(work.call());}catch(Throwable e){result.completeExceptionally(e);}});return result.get(15,TimeUnit.SECONDS);
+ }
+ private static javafx.scene.control.Button button(javafx.stage.Stage stage,String text){return find(stage.getScene().getRoot(),text);}
+ private static javafx.scene.control.Button find(javafx.scene.Node node,String text){
+  if(node instanceof javafx.scene.control.Button b && b.getText().equals(text))return b;
+  if(node instanceof Parent p)for(javafx.scene.Node child:p.getChildrenUnmodifiable()){var b=find(child,text);if(b!=null)return b;}return null;
+ }
+ private static void awaitButton(javafx.stage.Stage stage,String text)throws Exception{
+  long limit=System.nanoTime()+TimeUnit.SECONDS.toNanos(10);while(System.nanoTime()<limit){if(fx(()->{stage.getScene().getRoot().applyCss();stage.getScene().getRoot().layout();return button(stage,text)!=null;}))return;Thread.sleep(40);}fail("Không thấy nút "+text);
+ }
+ private static void screenshot(javafx.stage.Stage stage,String name)throws Exception{
+  Parent root=stage.getScene().getRoot();root.applyCss();root.layout();javafx.scene.image.WritableImage image=root.snapshot(null,null);
+  java.awt.image.BufferedImage output=new java.awt.image.BufferedImage((int)image.getWidth(),(int)image.getHeight(),java.awt.image.BufferedImage.TYPE_INT_ARGB);
+  for(int y=0;y<output.getHeight();y++)for(int x=0;x<output.getWidth();x++)output.setRGB(x,y,image.getPixelReader().getArgb(x,y));
+  java.nio.file.Path path=java.nio.file.Path.of("target/ui-preview/"+name+".png");java.nio.file.Files.createDirectories(path.getParent());javax.imageio.ImageIO.write(output,"png",path.toFile());
+ }
  @AfterAll static void stop(){Platform.exit();}
 }
+
