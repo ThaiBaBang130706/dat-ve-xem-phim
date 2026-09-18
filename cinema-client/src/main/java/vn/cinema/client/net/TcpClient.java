@@ -23,8 +23,8 @@ public final class TcpClient implements AutoCloseable {
   this.host=host;
   try{socket.connect(new InetSocketAddress(host,port),5000);socket.setTcpNoDelay(true);socket.setSoTimeout(65_000);}
   catch(IOException e){socket.close();writer.shutdownNow();timer.shutdownNow();throw e;}
-  daemon(this::read,"client-reader").start();
   timer.scheduleAtFixedRate(()->request("PING",Json.obj()).exceptionally(e->{close();return null;}),20,20,TimeUnit.SECONDS);
+  daemon(this::read,"client-reader").start();
  }
  public String host(){return host;}
  public int port(){return socket.getPort();}
@@ -61,15 +61,17 @@ public final class TcpClient implements AutoCloseable {
      future.complete(response.data());
     }else future.completeExceptionally(new IllegalArgumentException(response.message()));
    }
-  }catch(Exception e){if(!closed.get())disconnect.accept("Mất kết nối tới server. Ghế đang giữ sẽ được trả lại.");}
+  }catch(Exception e){close("Mất kết nối tới server. Ghế đang giữ sẽ được trả lại.");}
   finally{close();}
  }
- @Override public void close(){
+ @Override public void close(){close("Đã ngắt kết nối tới server.");}
+ private void close(String message){
   if(!closed.compareAndSet(false,true))return;
   try{socket.close();}catch(IOException ignored){}
   writer.shutdownNow();timer.shutdownNow();
   pending.forEach((id,f)->f.completeExceptionally(new IOException("Kết nối tới server đã đóng.")));pending.clear();
-  disconnect.accept("Đã ngắt kết nối tới server.");
+  disconnect.accept(message);
  }
  private static Thread daemon(Runnable r,String name){Thread t=new Thread(r,name);t.setDaemon(true);return t;}
 }
+

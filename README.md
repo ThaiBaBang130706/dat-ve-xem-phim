@@ -1,138 +1,225 @@
-# CinemaBooking — Đặt vé xem phim qua Java TCP
+# CinemaBooking — Hướng dẫn chạy và kiểm tra
 
-Ứng dụng đặt vé cho nhiều máy trong cùng mạng LAN. Tình huống nhóm tập trung giải quyết: **hai người cùng chọn ghế B3 thì server chỉ cho một người giữ và mua ghế đó**.
+Đồ án **đặt vé xem phim đa người dùng qua TCP/IP trong LAN, mô hình Client–Server**. Tình huống chính: hai khách cùng giữ một ghế, server chỉ chấp nhận một người.
 
 [![Build and test](https://github.com/ThaiBaBang130706/dat-ve-xem-phim/actions/workflows/ci.yml/badge.svg)](https://github.com/ThaiBaBang130706/dat-ve-xem-phim/actions/workflows/ci.yml)
 
-## Bản chính: Java TCP + JavaFX / NOIR
+## 1. Chọn đúng giao diện muốn mở
 
-Đồ án đặt vé rạp có **ba cửa sổ JavaFX**: vận hành server, khách đặt vé và admin quản lý rạp. Giao diện nền tối/vàng ấm; dữ liệu đến từ TCP server và SQLite. Admin và khách được điều hướng riêng theo quyền do server xác thực.
-
-**Trong IntelliJ, mở pom.xml gốc rồi Reload Maven. Chọn JDK 22.0.2 (hoặc 17+), Maven Bundled.** Repo có sẵn các cấu hình trong `.run`:
-
-1. **01_Build** → đợi BUILD SUCCESS.
-2. **02_Server_GUI** → bấm **Khởi động server** (TCP 5000, HTTP 5001).
-3. **03_Client_A** → Kết nối 127.0.0.1:5000 → user1 / User@1234.
-4. **04_Client_B** → user2 / User@1234 để thử nhiều khách.
-5. **05_Admin** → admin / Admin@123 để vào sidebar quản trị.
-
-Không chạy thêm JAR server khi server GUI đang hoạt động. Không cần mở HTML để thấy giao diện NOIR trong ứng dụng Java.
-
-[Hướng dẫn cập nhật và chạy IntelliJ](docs/CHAY_INTELLIJ.md) · [Kịch bản bảo vệ](docs/KICH_BAN_BAO_VE.md)
-
-Thư mục [cinema-web](cinema-web/README.md) là prototype tham khảo, chưa nối backend. Các mục streaming trong mẫu web không thuộc phạm vi đồ án đặt vé.
-
-## Chạy bằng terminal (tuỳ chọn, server console)
-
-Cần **JDK 17 trở lên (hỗ trợ JDK 22)**, **Maven 3.9+** và **Node.js 22+**. Lần đầu cần Internet để tải thư viện; sau đó các máy dùng ứng dụng qua LAN. Maven tải JavaFX theo hệ điều hành, không cần cài SDK JavaFX riêng.
-
-Mở terminal tại thư mục gốc repo:
-
-~~~bash
-mvn -B install -DskipTests
-java -jar cinema-server/target/cinema-server-1.0.0.jar
-~~~
-
-Mở terminal thứ hai, vẫn ở thư mục gốc:
-
-~~~bash
-mvn -pl cinema-client javafx:run
-~~~
-
-Trong cửa sổ client: nhập `127.0.0.1`, cổng `5000` → **Kết nối** → đăng nhập.
-
-| Tài khoản mẫu | Mật khẩu | Quyền |
+| Mục đích | Cách mở | Dữ liệu |
 |---|---|---|
-| admin | Admin@123 | Quản trị |
-| user1 | User@1234 | Khách hàng |
-| user2 | User@1234 | Khách hàng |
+| Xem thiết kế web VKU đỏ/vàng/xanh | Mở `cinema-web/index.html` bằng Chrome/Edge | Mẫu trong bộ nhớ, tải lại sẽ đặt lại; không phát phim thật |
+| Chạy đồ án đặt vé có server thật | IntelliJ: Server GUI + Client + Admin, theo mục 3 | TCP + SQLite; giao diện JavaFX NOIR |
+| Xem thống kê thật bằng trình duyệt | Java server + `cinema-dashboard`, mục 7 | Dashboard chỉ đọc, có đăng nhập admin |
 
-Server tự tạo `data/cinema.db` và `data/dashboard.key` khi chạy lần đầu. Mẫu gồm 10 phim hư cấu, phòng P1/P2/IMAX, 24 suất chiếu trong **ngày mai và ngày kia tính từ lần khởi tạo**, cùng một số ghế A1/A2 đã bán. Thanh toán và vé QR đều là mô phỏng.
+**Web VKU chưa nối backend Java.** Chuyển User/Admin/Server trên thanh demo không phải đăng nhập hoặc phân quyền thật. Chạy JavaFX không tự mở thiết kế web VKU. Node.js chỉ cần cho dashboard thống kê, không cần để chạy JavaFX hoặc mở bản web VKU.
 
-Lịch mẫu được giữ nguyên ở các lần chạy sau để bảo toàn lịch sử. Nếu đã hết lịch, admin thêm suất chiếu. Muốn dữ liệu demo mới, dừng server rồi dùng đường dẫn database mới:
+## 2. Cập nhật mã và mở đúng thư mục
 
-~~~bash
-java -jar cinema-server/target/cinema-server-1.0.0.jar --db=data-demo-moi/cinema.db
-~~~
+Nếu tải ZIP: dừng các chương trình cũ → GitHub **Code → Download ZIP** → giải nén vào thư mục mới. Nếu giữ dữ liệu, sao chép thư mục `data` khi server đã dừng; không chép `target` hoặc cấu hình IDE cũ sang bản mới.
 
-Khi dùng database khác, đặt `JAVA_BRIDGE_KEY_FILE` cho Node trỏ đến `dashboard.key` nằm cùng thư mục database đó.
+Thư mục gốc đúng phải chứa cùng lúc `pom.xml`, `cinema-common`, `cinema-server`, `cinema-client`, `cinema-operator`. Sau giải nén có thể lồng hai thư mục cùng tên. Với đường dẫn đã dùng trên máy anh, kiểm tra trong PowerShell:
 
-## Dashboard
+```powershell
+Set-Location 'I:\dat-ve-xem-phim-main\dat-ve-xem-phim-main'
+Test-Path .\pom.xml
+Test-Path .\cinema-operator\pom.xml
+```
 
-Mở terminal thứ ba:
+Cả hai phải trả về `True`. Nếu thư mục mới ở nơi khác, thay đường dẫn tương ứng. Không gõ đường dẫn `pom.xml` như một lệnh chạy chương trình.
 
-~~~bash
-cd cinema-dashboard
+## 3. Chạy bằng IntelliJ trên Windows — cách nên dùng
+
+### Chuẩn bị một lần
+
+1. **File → Open** → chọn `pom.xml` gốc → mở dưới dạng project nếu được hỏi.
+2. **File → Project Structure → Project → SDK**: chọn JDK **22.0.2** đang có. Nếu chưa có, Add JDK và chọn thư mục cài JDK, ví dụ `C:\Program Files\Java\jdk-22` (không chọn thư mục `bin`).
+3. **Settings → Build, Execution, Deployment → Build Tools → Maven**: chọn Maven đi kèm IntelliJ (**Bundled**). Trong **Runner → JRE**, chọn Project JDK; Maven Importer dùng cùng JDK nếu có tuỳ chọn.
+4. Mở bảng **Maven** bên phải → **Reload All Maven Projects**, chờ tải thư viện xong. Lần đầu cần Internet. Không cần cài JavaFX SDK riêng.
+5. Ở thanh trên, bấm danh sách đang ghi **Current File** và chọn cấu hình bên dưới. Nút Run của `pom.xml` không phải nút chạy ứng dụng.
+
+### Thứ tự chạy trên một laptop
+
+| Bước | Cấu hình chọn cạnh nút ▶ | Việc cần làm / kết quả |
+|---|---|---|
+| 1 | `01_Build` | Chạy và đợi **BUILD SUCCESS** |
+| 2 | `02_Server_GUI` | Cửa sổ server mở → giữ TCP 5000, HTTP 5001 → bấm **Khởi động server** |
+| 3 | `03_Client_A` | Host **127.0.0.1**, port **5000** → Kết nối → đăng nhập user1 |
+| 4 | `04_Client_B` | Chạy thêm client, đăng nhập user2 để thử tranh ghế |
+| 5 | `05_Admin` | Kết nối như trên, đăng nhập admin để vào quản trị rạp |
+
+Giữ server chạy khi mở các client. Có thể mở cả năm cấu hình theo thứ tự; build kết thúc, bốn cửa sổ ứng dụng có thể chạy đồng thời. **Không chạy thêm JAR server khi Server GUI đã khởi động server.** `05_Admin` không tự đăng nhập: quyền phụ thuộc tài khoản server xác thực.
+
+| Tài khoản mẫu | Mật khẩu | Giao diện |
+|---|---|---|
+| user1 | User@1234 | Chọn phim/suất/ghế, vé của tôi, tài khoản |
+| user2 | User@1234 | Khách thứ hai |
+| admin | Admin@123 | Phim, phòng, suất chiếu, khách hàng, đơn vé, vé theo ghế, nhật ký |
+
+Tài khoản này chỉ đúng với dữ liệu mẫu chưa đổi mật khẩu. Bật “Tạo dữ liệu mẫu nếu database còn trống” khi khởi động database mới. Admin không có luồng mua vé cá nhân.
+
+### Không thấy cấu hình hoặc Run bị mờ
+
+Vào **Run → Edit Configurations → + → Maven**, tạo các cấu hình sau. Ô lệnh có thể tên **Run** hoặc **Command line** tuỳ phiên bản IntelliJ.
+
+| Tên | Working directory | Lệnh |
+|---|---|---|
+| 01_Build | Thư mục gốc có pom.xml | `clean install -DskipTests` |
+| 02_Server_GUI | Thư mục gốc / cinema-operator | `javafx:run` |
+| 03_Client_A | Thư mục gốc / cinema-client | `javafx:run` |
+| 04_Client_B | Thư mục gốc / cinema-client | `javafx:run` |
+| 05_Admin | Thư mục gốc / cinema-client | `javafx:run` |
+
+Chọn thư mục bằng nút duyệt của IDE; **không thêm `-f` hay dấu nháy vào Working directory**. Apply → OK → chọn tên cấu hình → ▶. Không dùng `-am` cùng `javafx:run` vì Maven có thể chạy mục tiêu trên module không có ứng dụng JavaFX.
+
+## 4. Mở web VKU
+
+1. Mở thư mục `cinema-web` của bản mới.
+2. Nhấp đúp `index.html`, chọn Chrome/Edge.
+3. Thanh trên cùng có User / Admin / Server / UI kit; mỗi lớp có bố cục riêng.
+4. Thử tìm phim, mở chi tiết, thêm danh sách; Admin thử thêm/ẩn phim; Server thử node và xác nhận thao tác mô phỏng.
+
+Không chạy Java, Maven hoặc npm cho bản này. Nếu vẫn thấy bản cũ, kiểm tra đường dẫn trên thanh địa chỉ và mở file ở thư mục vừa giải nén. Xem [hướng dẫn web](cinema-web/README.md).
+
+## 5. Kiểm tra đồ án hoạt động đúng
+
+1. Server báo đang nghe TCP 5000; hai client đăng nhập thành công.
+2. Hai khách mở **cùng một suất chiếu tương lai**, cùng chọn ghế B3 còn trống. Chọn ghế chưa giữ ghế: cần bấm **Giữ ghế**.
+3. Client A giữ trước; client B giữ cùng ghế phải bị từ chối. Các client xem cùng suất nhận cập nhật ghế.
+4. A xác nhận thanh toán demo; mở **Vé của tôi**. Admin phải thấy đơn và vé tương ứng.
+5. A huỷ đơn trước giờ chiếu; ghế trở lại trống. Huỷ áp dụng toàn bộ đơn.
+6. Giữ một ghế khác rồi đóng client; kiểm tra ghế được trả. Hết hạn giữ 5 phút cũng phải trả ghế.
+7. Dừng server từ Server GUI; client phải báo ngắt kết nối. Khởi động lại rồi kết nối/đăng nhập lại.
+8. Đơn đã xác nhận vẫn còn sau khi khởi động lại với **cùng database**.
+
+Nếu lịch mẫu đã hết: admin thêm suất mới trong tương lai. Seed tạo lịch ngày mai/ngày kia **tính từ lần khởi tạo database**, không tự tạo lại mỗi lần chạy.
+
+## 6. Lỗi thường gặp và cách xử lý
+
+| Biểu hiện | Kiểm tra / cách xử lý |
+|---|---|
+| `java` hoặc `mvn is not recognized` | PowerShell chưa có PATH. Dùng Maven Bundled trong IntelliJ theo mục 3; IDE nhận JDK không đồng nghĩa terminal nhận Java |
+| `POM file ... does not exist` | Sai thư mục hoặc nháy lồng nhau; kiểm tra mục 2, bỏ `-f`, chạy tại thư mục gốc |
+| `BUILD SUCCESS` nhưng chưa có giao diện | Mới build xong. Chạy `02_Server_GUI`, sau đó client |
+| `Connection refused` | Server chưa bấm Khởi động, đã dừng, hoặc sai IP/cổng. Kiểm tra trạng thái trên server |
+| Cổng đang được sử dụng | Dừng server/JAR cũ. Không mở hai server cùng cổng. Nếu đổi TCP, client phải nhập cổng mới |
+| Database đang được server khác sử dụng | Dừng tiến trình server cũ; không xoá lock để chạy chồng hai server |
+| Không tìm thấy module `vn.cinema` | Chạy `01_Build` tại gốc để install đủ module, rồi chạy lại GUI |
+| Không tìm thấy JAR hoặc `Unable to access jarfile` | Build chưa thành công hoặc chạy sai thư mục; kiểm tra `cinema-server/target` |
+| JavaFX runtime components are missing | Chạy `javafx:run` bằng cấu hình Maven, không nhấp đúp JAR client |
+| Đăng nhập mẫu thất bại | Database cũ đã đổi mật khẩu/khoá tài khoản, hoặc không seed. Không xoá dữ liệu để thử; có thể chọn database demo mới |
+| Không thấy suất chiếu | Lịch seed cũ đã qua; admin thêm lịch tương lai |
+| Dữ liệu “biến mất” | Xem đường dẫn DB trong Server GUI/log. Chạy từ thư mục khác có thể trỏ sang DB khác |
+| Web VKU không có đơn vừa đặt | Web VKU là prototype riêng, chưa nối Java; kiểm tra đơn trong JavaFX Admin hoặc dashboard thật |
+| Không có `dashboard.key` | Khởi động Java trước; kiểm tra key cùng thư mục DB và cấu hình ở mục 7 |
+| Dashboard báo không kết nối được Java | Kiểm tra HTTP 5001, bridge URL/key; đổi DB hoặc key thì khởi động lại Node |
+| Dashboard `EADDRINUSE` | Cổng 3000 đang bận: dừng Node cũ hoặc đặt PORT khác |
+
+Chẩn đoán cổng trên cùng máy bằng PowerShell:
+
+```powershell
+Test-NetConnection 127.0.0.1 -Port 5000
+Get-NetTCPConnection -LocalPort 5000,5001 -State Listen -ErrorAction SilentlyContinue |
+  Select-Object LocalAddress,LocalPort,OwningProcess
+```
+
+`TcpTestSucceeded: True` chỉ chứng minh có dịch vụ nghe cổng, chưa chứng minh đặt vé đúng. Xác minh thêm bằng kịch bản mục 5. Không tắt toàn bộ firewall.
+
+## 7. Dashboard thống kê thật — tuỳ chọn
+
+Cần **Node.js 22+** và Java server đã chạy. Tại thư mục gốc:
+
+```powershell
+Set-Location .\cinema-dashboard
+node --version
 npm ci
 npm start
-~~~
+```
 
-Mở <http://localhost:3000>, đăng nhập admin. Dashboard hiển thị doanh thu, vé, ghế đang giữ, số client, biểu đồ, lịch chiếu, đơn vé và nhật ký. Node lấy dữ liệu từ Java mỗi 2 giây rồi đẩy tới trình duyệt bằng Socket.IO.
+Mở **http://localhost:3000**, đăng nhập admin. Dashboard chỉ đọc dữ liệu; thay đổi phim/phòng/đơn dùng JavaFX Admin. Java cung cấp HTTP bridge 5001, Node cập nhật dashboard mỗi 2 giây.
 
-Node mặc định đọc `../data/dashboard.key`. Không nhập khoá này vào trình duyệt hoặc commit khoá/database lên Git. Nên chạy Node và Java cùng máy để demo thuận tiện.
+Nếu đổi đường dẫn database hoặc cổng HTTP, trong cùng terminal trước `npm start`:
 
-## Giao diện theo tài khoản
+```powershell
+$env:JAVA_BRIDGE_KEY_FILE = 'I:\duong-dan-du-an\data\dashboard.key'
+$env:JAVA_BRIDGE_URL = 'http://127.0.0.1:5001'
+$env:PORT = '3000'
+npm start
+```
 
-Đăng nhập **admin** sẽ mở riêng cửa sổ **Quản trị rạp**, gồm Tổng quan, Phim, Phòng chiếu, Suất chiếu, Khách hàng, Đơn đặt vé, Vé theo ghế và Nhật ký. Không hiển thị Phim đang chiếu hoặc Vé của tôi trong giao diện này.
+Thay đường dẫn mẫu bằng file key thực tế bên cạnh database. Các biến chỉ áp dụng cho terminal hiện tại. `src/server.js` đọc biến môi trường; **chỉ tạo `.env` không tự nạp cấu hình**. Không đưa key/database lên GitHub. Với HTTP nội bộ giữ COOKIE_SECURE mặc định false; true dành cho triển khai HTTPS.
 
-Đăng nhập **user1/user2** mở giao diện khách để chọn phim và đặt vé. Cả hai loại cửa sổ dùng chung Java server, có thể chạy đồng thời trên một máy.
+## 8. Chạy bằng PowerShell — chỉ khi đã có Maven trong PATH
 
-Quản trị có tìm kiếm, lọc trạng thái/ngày, xem chi tiết đơn và vé theo từng ghế, xem sơ đồ ghế để mở/khoá ghế trống. Xem [hướng dẫn quản trị và cập nhật bản đang chạy](docs/QUAN_TRI.md).
+Không bắt buộc nếu dùng IntelliJ. Ví dụ JDK của anh; nếu cài nơi khác, sửa đường dẫn:
 
-## Có thể làm gì?
+```powershell
+$env:JAVA_HOME = 'C:\Program Files\Java\jdk-22'
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+java -version
+mvn -version
+```
 
-- **Khách hàng:** đăng ký, đăng nhập, tìm phim, xem nội dung/lịch chiếu, chọn tối đa 8 ghế, giữ ghế 5 phút, thanh toán demo, xem vé/QR, huỷ vé trước giờ chiếu, sửa tên và đổi mật khẩu.
-- **Quản trị JavaFX:** thống kê, thêm/sửa/ngừng dùng phim và phòng, thêm/sửa/huỷ suất chiếu, mở/khoá ghế trống, khoá/mở tài khoản, xem/huỷ đơn vé, xem nhật ký.
-- **Cập nhật trực tiếp:** ghế đổi màu ở các client đang xem cùng suất; tự trả ghế khi hết 5 phút, đăng xuất hoặc mất kết nối.
-- **Ràng buộc:** không bán trùng ghế; không sửa suất có ghế giữ/đã bán; không xếp lịch trùng phòng; có 15 phút dọn phòng; kiểm tra quyền admin tại server.
+Chỉ tiếp tục nếu cả hai lệnh thành công và Maven nhận đúng Java. Chạy tại thư mục gốc:
 
-Màu ghế: xanh = trống, vàng = người khác giữ, cam = bạn giữ, đỏ = đã bán, xám = tạm khoá. Viền đậm là ghế đang chọn tại máy của bạn. **Chọn ghế chưa có nghĩa là đã giữ ghế**; cần bấm “Giữ ghế”.
+```powershell
+mvn -B install -DskipTests
+```
 
-## Chạy hai máy trong LAN
+Đợi BUILD SUCCESS rồi chạy **một** server:
 
-1. Máy A chạy Java server và Node. Xem IPv4 bằng `ipconfig` trên Windows, ví dụ `192.168.1.10`.
-2. Máy B chạy JavaFX, nhập `192.168.1.10:5000`. Có thể mở thêm client trên A bằng `127.0.0.1:5000`.
-3. Đăng nhập user1/user2, mở cùng suất, cùng chọn B3, rồi bấm giữ ghế.
-4. Mở dashboard từ máy B tại `http://192.168.1.10:3000`.
+```powershell
+mvn -pl cinema-operator javafx:run
+```
 
-Firewall cần cho cổng TCP **5000** và **3000**. Cổng **5001** cần mở nếu Node chạy máy khác. Xem [hướng dẫn LAN và lỗi thường gặp](docs/HUONG_DAN_LAN.md).
+Mỗi client dùng terminal mới, vẫn ở thư mục gốc:
 
-## Cấu trúc dự án
+```powershell
+mvn -pl cinema-client javafx:run
+```
+
+Nếu chỉ cần server console thay cho Server GUI, dùng:
+
+```powershell
+& 'C:\Program Files\Java\jdk-22\bin\java.exe' -jar '.\cinema-server\target\cinema-server-1.0.0.jar'
+```
+
+PowerShell cần ký tự `&` trước đường dẫn chương trình có dấu cách. Không thêm nháy lồng quanh đường dẫn. JAR server chạy console sẽ **không có cửa sổ Server GUI**.
+
+## 9. Chạy hai máy LAN
+
+- Máy A chạy server. Dùng IPv4 LAN hiển thị trên Server GUI hoặc `ipconfig`.
+- Máy B chạy client: Host là IPv4 máy A, Port là 5000; không nhập `IP:port` chung vào ô Host, không dùng 127.0.0.1 cho máy khác.
+- Cho phép TCP 5000 qua firewall trên máy A trong mạng riêng. Cùng Wi-Fi nhưng mạng có client isolation vẫn có thể chặn kết nối.
+- Dashboard: thêm cổng 3000 nếu truy cập từ máy B. Cổng 5001 chỉ cần cho phép từ máy Node nếu Node chạy riêng.
+- Không cần máy thứ hai để bảo vệ demo: hai client trên một máy vẫn tạo hai kết nối TCP thật.
+
+Xem [hướng dẫn LAN](docs/HUONG_DAN_LAN.md). Ngoài LAN cần thiết lập đường mạng riêng phù hợp; bản thực hành TCP/HTTP chưa có TLS, không công khai trực tiếp các cổng lên Internet.
+
+## 10. Kiểm thử tự động và giới hạn
+
+`01_Build` có `-DskipTests`: build thành công **không có nghĩa test đã chạy**. Để chạy test, tạo Maven configuration tại gốc với lệnh `verify` (không có `-DskipTests`), hoặc dùng:
+
+```powershell
+mvn -B verify
+```
+
+Dashboard: chạy `npm run check` rồi `npm test` trong `cinema-dashboard` sau `npm ci`. Web VKU: chạy `node cinema-web/check.cjs` từ gốc; chỉ kiểm tra render/state, không thay thế kiểm thử trình duyệt. Khi sửa source web, chạy `python cinema-web/bundle.py` trước để đồng bộ index.html.
+
+GitHub Actions chạy Java 17/22, JavaFX trên màn hình ảo, kiểm thử tranh ghế/phân quyền/rollback, TCP/HTTP qua JAR thật và dashboard. Xem [kết quả rà soát](docs/KIEM_TRA_LOI.md). Không cam kết phần mềm không còn lỗi; giao diện và LAN Windows cần thử trên máy sử dụng.
+
+## 11. Cấu trúc và tài liệu
 
 | Thư mục | Vai trò |
 |---|---|
-| cinema-common | Request/Response, Gson, đọc và ghi JSON Lines |
-| cinema-server | TCP, xử lý đặt vé, JDBC/SQLite, phân quyền, HTTP bridge |
-| cinema-client | JavaFX, FXML, CSS, controller, TCP bất đồng bộ, mã QR |
-| cinema-dashboard | Express, Socket.IO, Chart.js; chỉ đọc |
-| docs | Kiến trúc, demo, hướng dẫn, slide thuyết trình |
-| scripts | Kiểm tra server đã đóng gói bằng hai client TCP thật |
+| cinema-common | Giao thức JSON Lines |
+| cinema-server | TCP, nghiệp vụ, SQLite, HTTP bridge |
+| cinema-client | JavaFX khách hàng và quản trị theo quyền |
+| cinema-operator | JavaFX vận hành server tại máy chủ |
+| cinema-dashboard | Dashboard Node chỉ đọc dữ liệu thật |
+| cinema-web | Prototype thiết kế VKU độc lập |
+| scripts | Smoke test server qua TCP/HTTP |
 
-Không dùng Spring Boot/Hibernate. Luồng đặt vé chính dùng ServerSocket/Socket; Socket.IO chỉ phục vụ dashboard.
+[Giao thức](protocol.md) · [Kiến trúc](docs/KIEN_TRUC.md) · [Quản trị](docs/QUAN_TRI.md) · [Hướng dẫn IntelliJ](docs/CHAY_INTELLIJ.md) · [Kịch bản bảo vệ](docs/KICH_BAN_BAO_VE.md) · [Slide HTML](docs/slides.html)
 
-## Tài liệu và thuyết trình
-
-- [Giao thức và toàn bộ lệnh](protocol.md)
-- [Kiến trúc, thuật toán, tổ chức dữ liệu](docs/KIEN_TRUC.md)
-- [Kịch bản demo và phân công nhóm 2–3 SV](docs/DEMO.md)
-- [Slide HTML](docs/slides.html): tải repo, mở file bằng trình duyệt; dùng ←/→, bấm Toàn màn hình hoặc in thành PDF. Không cần Internet.
-- [Nội dung slide dạng văn bản](docs/NOI_DUNG_SLIDE.md)
-
-## Kiểm tra
-
-~~~bash
-mvn -B verify
-cd cinema-dashboard
-npm test
-~~~
-
-Test JavaFX cần môi trường đồ hoạ. Linux không có màn hình dùng `xvfb-run -a mvn -B verify`. GitHub Actions dùng cách này và kiểm tra thêm file JAR thật qua TCP/HTTP.
-
-Kiểm thử gồm tranh ghế, rollback khi ghế bận, hết hạn giữ, ngắt kết nối, xác nhận lặp, quyền sở hữu vé, khoá tài khoản, bảo vệ HTTP/Socket.IO và nạp FXML/CSS.
-
-## Phạm vi bản thực hành
-
-Một Java server quản lý một database SQLite; đây là **Client/Server**, chưa có cụm server dự phòng. Giới hạn 64 kết nối TCP. Mật khẩu được băm PBKDF2, nhưng TCP/HTTP của bản LAN chưa có TLS; dùng tài khoản mẫu trong mạng thực hành.
-
-QR chứa mã vé demo, chưa có ứng dụng quét soát vé hoặc cổng thanh toán thật. Một suất có một mức giá, chưa tính ghế VIP, bắp nước, khuyến mãi. Poster dùng thẻ chữ để mở được khi không có Internet.
-
+Một server / một SQLite, tối đa 64 kết nối TCP. Thanh toán, QR và poster là demo; chưa có cổng thanh toán thật, kiểm soát vé thương mại hoặc cụm dự phòng. Dữ liệu mẫu gồm phim hư cấu, phòng chiếu và lịch tương lai khi khởi tạo.
