@@ -1,23 +1,24 @@
-/* Optional CSS-first Tailwind theme mapping. Import into the host application's
-   Tailwind entry point; the standalone prototype does not depend on Tailwind. */
+/* Optional CSS-first Tailwind mapping; standalone prototype uses styles.css. */
 @theme {
-  --color-cinema-bg: #0B0B0D;
-  --color-cinema-surface: #141418;
-  --color-cinema-raised: #1C1C22;
-  --color-cinema-border: #2A2A30;
-  --color-cinema-text: #F4F1EA;
-  --color-cinema-muted: #A6A6B1;
-  --color-cinema-accent: #E8B84A;
-  --color-cinema-success: #3DDC97;
-  --color-cinema-warning: #F5A524;
-  --color-cinema-error: #E5484D;
+  --color-cinema-bg: #0B0D12;
+  --color-cinema-surface: #161A22;
+  --color-cinema-raised: #202633;
+  --color-cinema-border: #303846;
+  --color-cinema-text: #F4F5F7;
+  --color-cinema-muted: #A8B0BC;
+  --color-cinema-primary: #E31C23;
+  --color-cinema-accent: #F5C518;
+  --color-cinema-brand: #0057B8;
+  --color-cinema-brand-readable: #73B6FF;
+  --color-cinema-on-primary: #FFFDFC;
+  --color-cinema-success: #0057B8;
+  --color-cinema-warning: #F5C518;
+  --color-cinema-error: #E31C23;
   --font-cinema: Inter, "Segoe UI", Arial, sans-serif;
-  --radius-control: 8px;
-  --radius-card: 10px;
-  --radius-modal: 12px;
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-modal: 16px;
   --spacing: 4px;
   --breakpoint-md: 48rem;
   --breakpoint-xl: 75rem;
 }
-/* Example host classes: bg-cinema-bg text-cinema-text, rounded-card,
-   grid grid-cols-12 gap-6, col-span-12 md:col-span-6 xl:col-span-3. */

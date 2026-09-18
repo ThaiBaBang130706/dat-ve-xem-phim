@@ -1,4 +1,4 @@
-# NOIR — Cinema UI Kit
+# VKU Cinema — Cinema UI Kit
 
 Prototype tương tác cho **User · Content Admin · Server Operations**, cùng một design system dark cinema. Đây là bộ giao diện web xem phim độc lập; chưa tích hợp vào ứng dụng Java TCP đặt vé rạp.
 
@@ -10,6 +10,12 @@ Prototype tương tác cho **User · Content Admin · Server Operations**, cùng
 4. Chọn **Mặc định / Loading / Empty / Error / Không có quyền** để xem từng trạng thái.
 
 Không cần chạy Maven, Java, npm hoặc server. Không cần internet để xem prototype: CSS, JavaScript và poster SVG đều nằm trong file.
+
+## Nhận diện VKU
+
+Đỏ `#E31C23` cho CTA/progress; vàng `#F5C518` cho rating/focus; xanh `#0057B8` cho điều hướng. Nền tối `#0B0D12`, surface `#161A22`. Logo ba dải màu là biểu tượng riêng cho đồ án, lấy cảm hứng VKU, không phải logo chính thức của trường.
+
+Header có tìm kiếm ở giữa; menu nằm tại nút ba gạch. Poster dạng lưới 6/4/2 cột theo desktop/tablet/mobile, tỉ lệ 2:3, hover glow vàng. Ba giao diện User/Admin/Server có bố cục và chức năng riêng.
 
 ## Các màn hình
 
@@ -51,3 +57,4 @@ Khi sửa mã nguồn tách tệp, mở `source.html`. `index.html` là snapshot
 Phim, poster, tài khoản, URL, lượt xem, log và node là dữ liệu mẫu. Các thay đổi chỉ tồn tại trong bộ nhớ của tab; tải lại trang sẽ đặt lại. Player mô phỏng giao diện và tiến trình, **không phát phim thật**. Không có upload lên server, transcode, lệnh restart thật hoặc phân quyền backend.
 
 Poster là minh hoạ vector do bộ prototype tạo, không sử dụng poster phim thương mại. Font dùng font hệ thống nếu máy không có Inter.
+

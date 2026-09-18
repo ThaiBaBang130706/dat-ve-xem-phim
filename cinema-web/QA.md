@@ -1,8 +1,11 @@
 # Kiểm tra bàn giao
 
-Ngày: 15/09/2026.
+Ngày: 18/09/2026.
 
 ## Đã thực hiện
+
+- Bản VKU: đồng bộ token, header, hero, poster, player và sidebar ba lớp.
+- Kiểm tra số học contrast: chữ CTA dùng #FFFDFC trên đỏ, icon nhỏ dùng sắc xanh sáng.
 
 - JavaScript qua `node --check`.
 - Render chuỗi HTML của 26 màn hình bằng Node VM: không có exception hoặc giá trị `undefined` ngoài ý muốn.
@@ -27,3 +30,4 @@ Tailwind theme là tài liệu ánh xạ, chưa được build với một dự 
 6. Thử player fallback và xác nhận hành động node.
 
 Chạy lại kiểm tra Node: `node check.cjs`. Không cần Node để mở giao diện.
+

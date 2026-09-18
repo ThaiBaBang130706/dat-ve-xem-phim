@@ -5,3 +5,4 @@ source = source.replace('<link rel="stylesheet" href="styles.css">', '<style>' +
 source = source.replace('<script src="app.js"></script>', '<script>' + (root / 'app.js').read_text(encoding='utf-8') + '</script>')
 (root / 'index.html').write_text(source, encoding='utf-8')
 print('Updated index.html')
+

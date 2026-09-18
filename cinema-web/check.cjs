@@ -5,13 +5,22 @@ const document={title:'',activeElement:null,body:{style:{}},getElementById(id){i
 const context={document,window:{scrollTo(){},scrollY:0},setInterval(){},setTimeout(){},console,URL,Blob,FormData};vm.createContext(context);vm.runInContext(script,context);
 const ev=(action,id='',extra={})=>{const el={dataset:{action,id:String(id),...extra}};listeners.click[0]({preventDefault(){},target:{closest(){return el;}}});};
 let screens=0;for(const [mode,pages]of Object.entries({user:['home','catalog','mylist','detail','player'],admin:['dashboard','movies','episodes','genres','users','comments','banners','sources','reports','settings'],server:['overview','nodes','transcode','routing','logs','storage','settings'],kit:['tokens','components','states','handoff']}))for(const page of pages){vm.runInContext(`S.mode='${mode}';S.page='${page}';S.state='ready';render()`,context);const out=elements.get('root').innerHTML;assert(out.length>1000,mode+page);assert(!out.includes('undefined'),mode+page+' undefined');screens++;}
-for(const state of ['loading','empty','error','denied']){vm.runInContext(`S.state='${state}';render()`,context);assert(elements.get('root').innerHTML.includes('NOIR'));}
+for(const state of ['loading','empty','error','denied']){vm.runInContext(`S.state='${state}';render()`,context);assert(elements.get('root').innerHTML.includes('VKU CINEMA'));}
 ev('mode','user');ev('list-toggle',1);assert(vm.runInContext('S.listed.has(1)',context));ev('list-toggle',1);assert(!vm.runInContext('S.listed.has(1)',context));
 ev('detail',5);assert(elements.get('root').innerHTML.includes('Danh sách tập'));ev('episode-play',5,{episode:'3'});assert(vm.runInContext('S.episode===3',context));ev('simulate-source');assert(elements.get('root').innerHTML.includes('Nguồn phát không phản hồi'));ev('fallback');assert(vm.runInContext("S.source==='Singapore'&&!S.sourceError",context));
 ev('mode','admin');ev('page','movies');ev('hide-movie',1);assert(vm.runInContext("movies[0].status==='Ẩn'",context));ev('hide-movie',1);assert(vm.runInContext("movies[0].status==='Công khai'",context));ev('edit-movie',1);assert(elements.get('modal-root').innerHTML.includes('movie-form'));ev('close-modal');assert(!elements.get('modal-root').innerHTML);
 ev('page','episodes');ev('move-down',1,{kind:'episode'});assert(vm.runInContext('episodes[1].id===1',context));
 ev('page','comments');vm.runInContext('S.selected.add(1)',context);ev('bulk-approve');assert(vm.runInContext("comments[0].status==='Đã duyệt'",context));
 ev('mode','server');ev('page','nodes');ev('node-restart',4);assert(vm.runInContext("nodes[3].status==='Down'",context));assert(elements.get('modal-root').innerHTML.includes('Xác nhận'));ev('confirm-node',4);assert(vm.runInContext("nodes[3].status==='Healthy'",context));ev('node-maintenance',1);ev('confirm-node',1);assert(vm.runInContext("nodes[0].status==='Maintenance'",context));ev('page','transcode');ev('retry-job',3);assert(vm.runInContext("queue[2].status==='Đang chờ'",context));
+const palette=vm.runInContext('tokens.colors',context);
+assert.equal(palette.primary,'#E31C23');assert.equal(palette.highlight,'#F5C518');assert.equal(palette.brand,'#0057B8');
+function luminance(hex){const c=hex.slice(1).match(/../g).map(x=>parseInt(x,16)/255).map(x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4);return c[0]*.2126+c[1]*.7152+c[2]*.0722;}
+function contrast(a,b){const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}
+assert(contrast(palette.onPrimary,palette.primary)>=4.5,'CTA text contrast');
+assert(contrast(palette.text,palette.brand)>=4.5,'Navigation text contrast');
+assert(contrast(palette.muted,palette.surface)>=4.5,'Muted text contrast');
+assert(contrast(palette.brandReadable,palette.surface)>=4.5,'Blue link contrast');
 fs.writeFileSync(__dirname+'/tokens.json',vm.runInContext('JSON.stringify(tokens,null,2)',context));
 fs.writeFileSync(__dirname+'/styles.css',html.match(/<style>([\s\S]+)<\/style>/)[1]);fs.writeFileSync(__dirname+'/app.js',script);
 console.log(JSON.stringify({screensRendered:screens,statesRendered:4,interactionChecks:16,errors:0,scope:'Node VM render and state checks; not a browser visual or DOM integration test'},null,2));
+

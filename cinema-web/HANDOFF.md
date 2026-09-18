@@ -1,4 +1,4 @@
-# NOIR — Bàn giao thiết kế
+# VKU Cinema — Bàn giao thiết kế
 
 ## 1. Hướng thiết kế
 
@@ -10,32 +10,31 @@ Ba lớp dùng cùng `:root` trong styles.css. Accent chỉ dùng cho hành đ�
 
 | Token | Giá trị | Sử dụng |
 |---|---|---|
-| background | #0B0B0D | Nền trang |
-| surface | #141418 | Card, bảng, modal |
-| raised | #1C1C22 | Nút phụ, hover |
-| border | #2A2A30 | Đường chia, viền |
-| text | #F4F1EA | Nội dung chính |
-| muted | #A6A6B1 | Nhãn và nội dung phụ |
-| accent | #E8B84A | CTA, active, progress |
-| success | #3DDC97 | Healthy, công khai, thành công |
-| warning | #F5A524 | Cảnh báo, pending |
-| error | #E5484D | Lỗi, tác vụ thất bại |
+| background / backgroundAlt | #0B0D12 / #12141A | Nền tối |
+| surface / raised | #161A22 / #202633 | Card, modal, hover |
+| border | #303846 | Phân cách |
+| text / muted | #F4F5F7 / #A8B0BC | Nội dung / phụ |
+| primary | #E31C23 | CTA, progress, tiêu đề lớn |
+| highlight | #F5C518 | Rating, focus, glow |
+| brand | #0057B8 | Điều hướng, nút phụ, trạng thái bình thường |
+| onPrimary | #FFFDFC | Chữ trên CTA đỏ |
+| brandReadable | #73B6FF | Sắc xanh sáng cho icon/link trên nền tối |
 
-Nút vàng dùng chữ tối #171309. Badge lỗi/cảnh báo dùng nền tint tối và chữ sáng hơn token gốc để dễ đọc ở kích thước nhỏ. Đường viền là phân cách nhẹ, không dùng làm dấu hiệu focus; focus có viền vàng 2px, offset 4px.
+Chỉ ba họ màu accent: đỏ, vàng, xanh. Trạng thái luôn có chữ/icon; trạng thái tốt dùng xanh thay vì bổ sung xanh lá. Logo ba dải màu tự thiết kế lấy cảm hứng VKU, không phải logo chính thức.
 
-Spacing: 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 px. Radius: control 8px, card 10px, modal 12px. Grid desktop 12 cột, gutter 24px; KPI span 3, chart span 8, bảng phụ span 4.
+Chữ #F4F5F7 trên đỏ gốc chỉ đạt khoảng 4,32:1; dùng #FFFDFC cho chữ CTA. Xanh gốc trên surface không đủ tương phản cho icon nhỏ; dùng sắc xanh sáng #73B6FF, hoặc nền xanh với chữ sáng. Focus vàng 2px, offset 4px. Viền card chỉ phân cách, không thay thế focus. Đây là kiểm tra cặp màu, không phải chứng nhận WCAG toàn hệ thống.
 
-Typography: Inter → Segoe UI → Arial → sans-serif. Display 64/65, H1 32/38, H2 22/29, H3 16/24, body 14/22, caption 12/18. Dashboard có metadata 10–11px; không dùng cỡ này cho hướng dẫn quan trọng hoặc nút chính.
+Spacing: 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64px. Radius: control 10px, card 14px, modal 16px. Grid nội dung 12 cột, gutter 24px. Motion 240ms, có prefers-reduced-motion. Font: Inter → Segoe UI → Arial → sans-serif; không tải font ngoài. Hero 72px desktop / 48px mobile, tiêu đề semibold, body regular.
 
 ## 3. Responsive
 
 | Viewport | User | Admin / Server |
 |---|---|---|
-| ≥ 1200px | Header đầy đủ, hero ngang, poster rows | Sidebar 228px, KPI 4 cột, chart + panel phụ |
-| 768–1199px | Header rút gọn, hàng phim cuộn | Sidebar rail 76px, tooltip tên mục, khoảng nội dung 24px |
-| < 768px | Hamburger, search, hero ảnh trên/nội dung dưới | Drawer, KPI 2 cột, panel xếp dọc, bảng cuộn bên trong |
+| ≥ 1200px | Header logo/search/actions; poster 6 cột | Sidebar đầy đủ, KPI 4 cột |
+| 768–1199px | Header gọn, poster 4 cột | Sidebar icon rail, panel co giãn |
+| < 768px | Search hàng riêng, hero xếp dọc, poster 2 cột | Sidebar drawer, KPI 2 cột, bảng cuộn nội bộ |
 
-Khoảng trên mobile giảm còn 12–20px. Modal có max-height 90vh và cuộn; không đẩy toàn trang vượt viewport. Poster trên touch mở chi tiết, không phụ thuộc hover. Bảng dùng vùng overflow-x riêng; không giấu các cột thao tác.
+Thể loại và hàng tiếp tục xem cuộn ngang; lưới khám phá xuống dòng. Modal cuộn trong viewport. Poster touch mở chi tiết trực tiếp, không phụ thuộc hover. Nút menu cập nhật aria-expanded. Focus vàng áp dụng cho bàn phím; giảm chuyển động theo thiết lập hệ điều hành.
 
 ## 4. Mapping sang React / Next
 
@@ -97,3 +96,4 @@ URL mẫu có đuôi `.test`. Bản thật chỉ nhận nguồn phát đã đư�
 Series minh hoạ một season; chưa có editor metadata cho nhiều season. Các thông số biểu đồ, quyền nội dung, lịch sử xem và số người online là mẫu. Chưa có hệ thống đăng nhập, billing, DRM, phụ đề thực, giám sát thật hoặc thao tác hạ tầng thật. Hero hiện minh hoạ một vị trí chính; màn quản trị có sắp xếp và lịch banner mẫu.
 
 Bộ này phục vụ duyệt thiết kế và thống nhất cách implement; không mô tả là nền tảng streaming đã vận hành.
+
