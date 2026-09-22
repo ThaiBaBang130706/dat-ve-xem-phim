@@ -11,19 +11,30 @@ public final class AdminService {
  private final Database db;
  private final Clock clock;
  private final BookingService booking;
- public AdminService(Database db,Clock clock,BookingService booking){this.db=db;this.clock=clock;this.booking=booking;}
+ private final CatalogService catalog;private final MediaService media;
+ public AdminService(Database db,Clock clock,BookingService booking){this.db=db;this.clock=clock;this.booking=booking;this.catalog=new CatalogService(db,clock);this.media=new MediaService(db,clock);}
  public JsonElement handle(Session session,String type,JsonObject data)throws Exception {
   db.read(c->AuthService.check(c,session,true));
   return switch(type){
    case "ADMIN_GET_STATS" -> stats();
-   case "ADMIN_LIST_MOVIES" -> db.read(c->rows(c,"SELECT * FROM movies ORDER BY id DESC"));
-   case "ADMIN_LIST_ROOMS" -> db.read(c->rows(c,"SELECT * FROM rooms ORDER BY id"));
+   case "ADMIN_LIST_MOVIES" -> catalog.movies(true);
+   case "ADMIN_LIST_ROOMS" -> catalog.rooms();
    case "ADMIN_LIST_SHOWS" -> shows();
    case "ADMIN_LIST_USERS" -> db.read(c->rows(c,"SELECT id,username,display_name,role,status,created_at FROM users ORDER BY id"));
    case "ADMIN_LIST_BOOKINGS" -> bookings();
    case "ADMIN_LIST_TICKETS" -> tickets();
    case "ADMIN_LIST_LOGS" -> logs();
-   case "ADMIN_SAVE_MOVIE" -> saveMovie(session,data);
+   case "ADMIN_SAVE_MOVIE" -> catalog.saveMovie(session,data);
+   case "ADMIN_LIST_GENRES" -> catalog.genres(true);
+   case "ADMIN_LIST_AREAS" -> catalog.areas(true);
+   case "ADMIN_LIST_CINEMAS" -> catalog.cinemas(true,0);
+   case "ADMIN_SAVE_GENRE" -> catalog.saveLookup(session,data,"genres");
+   case "ADMIN_SAVE_AREA" -> catalog.saveLookup(session,data,"areas");
+   case "ADMIN_SAVE_CINEMA" -> catalog.saveCinema(session,data);
+   case "ADMIN_DELETE_GENRE" -> catalog.archive(session,data,"genres");
+   case "ADMIN_DELETE_AREA" -> catalog.archive(session,data,"areas");
+   case "ADMIN_DELETE_CINEMA" -> catalog.archive(session,data,"cinemas");
+   case "ADMIN_UPLOAD_IMAGE" -> media.upload(session,data);
    case "ADMIN_DELETE_MOVIE" -> archive(session,data,"movies","movie_id");
    case "ADMIN_SAVE_ROOM" -> saveRoom(session,data);
    case "ADMIN_DELETE_ROOM" -> archive(session,data,"rooms","room_id");
@@ -43,7 +54,7 @@ public final class AdminService {
   });
  }
  public JsonArray shows()throws Exception {
-  return db.read(c->rows(c,"SELECT s.*,m.title,r.name AS room_name,r.rows_count,r.cols_count,(SELECT COUNT(*) FROM seats_state ss WHERE ss.show_id=s.id) AS capacity,(SELECT COUNT(*) FROM seats_state ss WHERE ss.show_id=s.id AND ss.status='SOLD') AS sold,(SELECT COUNT(*) FROM seats_state ss WHERE ss.show_id=s.id AND ss.status='HELD') AS held FROM showtimes s JOIN movies m ON m.id=s.movie_id JOIN rooms r ON r.id=s.room_id ORDER BY s.starts_at DESC LIMIT 500"));
+  return db.read(c->rows(c,"SELECT s.*,m.title,ci.name AS cinema_name,a.name AS area_name,r.name AS room_name,r.rows_count,r.cols_count,(SELECT COUNT(*) FROM seats_state ss WHERE ss.show_id=s.id) AS capacity,(SELECT COUNT(*) FROM seats_state ss WHERE ss.show_id=s.id AND ss.status='SOLD') AS sold,(SELECT COUNT(*) FROM seats_state ss WHERE ss.show_id=s.id AND ss.status='HELD') AS held FROM showtimes s JOIN movies m ON m.id=s.movie_id JOIN rooms r ON r.id=s.room_id JOIN cinemas ci ON ci.id=r.cinema_id JOIN areas a ON a.id=ci.area_id ORDER BY s.starts_at DESC LIMIT 500"));
  }
  public JsonArray bookings()throws Exception {
   return db.read(c->rows(c,"SELECT b.*,u.username,m.title,r.name AS room_name,s.starts_at,(SELECT group_concat(t.seat_label, ', ') FROM tickets t WHERE t.booking_id=b.id) AS seats FROM bookings b JOIN users u ON u.id=b.user_id JOIN showtimes s ON s.id=b.show_id JOIN movies m ON m.id=s.movie_id JOIN rooms r ON r.id=s.room_id ORDER BY b.id DESC LIMIT 500"));
@@ -55,35 +66,22 @@ public final class AdminService {
   return db.read(c->rows(c,"SELECT l.id,l.created_at,COALESCE(u.username,'system') AS username,l.action,l.detail FROM logs l LEFT JOIN users u ON u.id=l.user_id ORDER BY l.id DESC LIMIT 200"));
  }
  public void checkAdmin(long userId)throws Exception {db.read(c->AuthService.check(c,new Session(userId,"http-dashboard"),true));}
- private JsonObject saveMovie(Session session,JsonObject d)throws Exception {
-  long id=Json.num(d,"id",0),duration=number(d,"duration_minutes",30,300);
-  String title=text(d,"title",1,100),genre=text(d,"genre",1,40),rating=text(d,"age_rating",1,6),description=text(d,"description",0,2000);
-  require(java.util.Set.of("P","K","T13","T16","T18").contains(rating),"Phân loại tuổi: P, K, T13, T16 hoặc T18.");
-  return db.write(c->{
-   AuthService.check(c,session,true);
-   long saved=id;
-   if(id==0)saved=insert(c,"INSERT INTO movies(title,genre,duration_minutes,age_rating,description) VALUES(?,?,?,?,?)",title,genre,duration,rating,description);
-   else{
-    JsonObject old=one(c,"SELECT * FROM movies WHERE id=?",id);require(old!=null,"Phim không tồn tại.");
-    if(Json.num(old,"duration_minutes",0)!=duration)require(one(c,"SELECT id FROM showtimes WHERE movie_id=? AND status='OPEN' AND starts_at>?",id,clock.millis())==null,"Phim đã có suất chiếu sắp tới. Giữ nguyên thời lượng hoặc huỷ suất trước.");
-    exec(c,"UPDATE movies SET title=?,genre=?,duration_minutes=?,age_rating=?,description=?,active=1 WHERE id=?",title,genre,duration,rating,description,id);
-   }
-   db.log(c,session.userId(),"SAVE_MOVIE","Phim "+saved+" / "+title,clock.millis());
-   return one(c,"SELECT * FROM movies WHERE id=?",saved);
-  });
- }
  private JsonObject saveRoom(Session session,JsonObject d)throws Exception {
   long id=Json.num(d,"id",0),rowCount=number(d,"rows_count",1,12),colCount=number(d,"cols_count",1,16);
   String name=text(d,"name",1,30);
   return db.write(c->{
    AuthService.check(c,session,true);
    require(one(c,"SELECT id FROM rooms WHERE name=? AND id<>?",name,id)==null,"Tên phòng đã tồn tại.");
+   JsonObject previous=id==0?null:one(c,"SELECT * FROM rooms WHERE id=?",id);
+   long cinema=Json.num(d,"cinema_id",previous==null?1:Json.num(previous,"cinema_id",1));
+   require(one(c,"SELECT ci.id FROM cinemas ci JOIN areas a ON a.id=ci.area_id WHERE ci.id=? AND ci.active=1 AND a.active=1",cinema)!=null,"Rạp không còn hoạt động.");
    long saved=id;
-   if(id==0)saved=insert(c,"INSERT INTO rooms(name,rows_count,cols_count) VALUES(?,?,?)",name,rowCount,colCount);
+   if(id==0)saved=insert(c,"INSERT INTO rooms(name,rows_count,cols_count,cinema_id) VALUES(?,?,?,?)",name,rowCount,colCount,cinema);
    else {
     JsonObject old=one(c,"SELECT * FROM rooms WHERE id=?",id);require(old!=null,"Phòng không tồn tại.");
     if(Json.num(old,"rows_count",0)!=rowCount || Json.num(old,"cols_count",0)!=colCount)require(one(c,"SELECT id FROM showtimes WHERE room_id=?",id)==null,"Phòng đã có lịch chiếu. Tạo phòng mới nếu cần đổi sơ đồ ghế.");
-    exec(c,"UPDATE rooms SET name=?,rows_count=?,cols_count=?,active=1 WHERE id=?",name,rowCount,colCount,id);
+    if(Json.num(old,"cinema_id",1)!=cinema)require(one(c,"SELECT id FROM showtimes WHERE room_id=?",id)==null,"Phòng đã có lịch chiếu, hãy tạo phòng mới tại rạp khác.");
+    exec(c,"UPDATE rooms SET name=?,rows_count=?,cols_count=?,cinema_id=?,active=1 WHERE id=?",name,rowCount,colCount,cinema,id);
    }
    db.log(c,session.userId(),"SAVE_ROOM","Phòng "+saved+" / "+name,clock.millis());
    return one(c,"SELECT * FROM rooms WHERE id=?",saved);
@@ -107,6 +105,8 @@ public final class AdminService {
    AuthService.check(c,session,true);
    JsonObject m=one(c,"SELECT * FROM movies WHERE id=? AND active=1",movie),r=one(c,"SELECT * FROM rooms WHERE id=? AND active=1",room);
    require(m!=null && r!=null,"Phim hoặc phòng không còn hoạt động.");
+   CatalogService.checkShowDate(m,start);
+   require(one(c,"SELECT ci.id FROM cinemas ci JOIN areas a ON a.id=ci.area_id WHERE ci.id=? AND ci.active=1 AND a.active=1",Json.num(r,"cinema_id",1))!=null,"Rạp hoặc khu vực không còn hoạt động.");
    long end=start+Json.num(m,"duration_minutes",0)*60_000;
    require(one(c,"SELECT id FROM showtimes WHERE room_id=? AND id<>? AND status='OPEN' AND starts_at<? AND ends_at>?",room,id,end+900_000,start-900_000)==null,"Lịch chiếu bị trùng; cần 15 phút dọn phòng giữa hai suất.");
    long saved=id;

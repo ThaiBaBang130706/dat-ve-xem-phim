@@ -2,6 +2,8 @@
 
 Đồ án **đặt vé xem phim đa người dùng qua TCP/IP trong LAN, mô hình Client–Server**. Tình huống chính: hai khách cùng giữ một ghế, server chỉ chấp nhận một người.
 
+**Cập nhật danh mục phim/rạp:** poster và banner thật, tải ảnh qua LAN, trailer, nhiều thể loại, ngày phát hành, thông tin phim và bộ lọc khu vực/rạp/ngày. [Hướng dẫn sử dụng](docs/DANH_MUC_PHIM_RAP.md).
+
 [![Build and test](https://github.com/ThaiBaBang130706/dat-ve-xem-phim/actions/workflows/ci.yml/badge.svg)](https://github.com/ThaiBaBang130706/dat-ve-xem-phim/actions/workflows/ci.yml)
 
 ## 1. Chọn đúng giao diện muốn mở
@@ -54,7 +56,7 @@ Giữ server chạy khi mở các client. Có thể mở cả năm cấu hình t
 |---|---|---|
 | user1 | User@1234 | Chọn phim/suất/ghế, vé của tôi, tài khoản |
 | user2 | User@1234 | Khách thứ hai |
-| admin | Admin@123 | Phim, phòng, suất chiếu, khách hàng, đơn vé, vé theo ghế, nhật ký |
+| admin | Admin@123 | Phim, thể loại, khu vực, rạp, phòng, suất chiếu, khách hàng, đơn vé, vé theo ghế, nhật ký |
 
 Tài khoản này chỉ đúng với dữ liệu mẫu chưa đổi mật khẩu. Bật “Tạo dữ liệu mẫu nếu database còn trống” khi khởi động database mới. Admin không có luồng mua vé cá nhân.
 
@@ -222,4 +224,4 @@ GitHub Actions chạy Java 17/22, JavaFX trên màn hình ảo, kiểm thử tra
 
 [Giao thức](protocol.md) · [Kiến trúc](docs/KIEN_TRUC.md) · [Quản trị](docs/QUAN_TRI.md) · [Hướng dẫn IntelliJ](docs/CHAY_INTELLIJ.md) · [Kịch bản bảo vệ](docs/KICH_BAN_BAO_VE.md) · [Slide HTML](docs/slides.html)
 
-Một server / một SQLite, tối đa 64 kết nối TCP. Thanh toán, QR và poster là demo; chưa có cổng thanh toán thật, kiểm soát vé thương mại hoặc cụm dự phòng. Dữ liệu mẫu gồm phim hư cấu, phòng chiếu và lịch tương lai khi khởi tạo.
+Một server / một SQLite, tối đa 64 kết nối TCP. Thanh toán và QR là demo; ảnh có thể dùng URL hoặc tải từ máy admin, poster minh hoạ được dùng làm dự phòng; chưa có cổng thanh toán thật, kiểm soát vé thương mại hoặc cụm dự phòng. Dữ liệu mẫu gồm phim hư cấu, phòng chiếu và lịch tương lai khi khởi tạo.

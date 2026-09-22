@@ -15,6 +15,7 @@ public final class Database {
    s.execute("PRAGMA journal_mode=WAL");
    String schema=new String(Objects.requireNonNull(getClass().getResourceAsStream("/schema.sql")).readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);
    for(String sql:schema.split(";"))if(!sql.isBlank())s.execute(sql);
+   CatalogMigration.migrate(c);
    // A previous process cannot retain ownership of a hold.
    s.executeUpdate("UPDATE seats_state SET status='AVAILABLE',held_by=NULL,hold_session=NULL,hold_until=NULL WHERE status='HELD'");
   }
@@ -70,6 +71,15 @@ public final class Database {
    String[] titles={"Hẹn Nhau Ở Huế","Chuyến Tàu Bình Minh","Mật Mã Đại Dương","Mùa Hè Của Chúng Ta","Ngôi Nhà Cuối Phố","Hành Trình Sao Hoả","Bức Thư Chưa Gửi","Đội Bóng Xóm Nhỏ","Bên Kia Cầu Vồng","Một Ngày Thật Khác"};
    String catalog=new String(Objects.requireNonNull(getClass().getResourceAsStream("/seed.sql")).readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);
    try(Statement statement=c.createStatement()){for(String sql:catalog.split(";"))if(!sql.isBlank())statement.execute(sql);}
+   CatalogMigration.importGenres(c);
+   exec(c,"UPDATE areas SET name='TP Huế' WHERE id=1");
+   exec(c,"INSERT INTO areas(name) VALUES('Đà Nẵng')");
+   exec(c,"UPDATE cinemas SET name='NOIR Huế (demo)',address='Địa chỉ minh hoạ tại TP Huế',phone='02340000000' WHERE id=1");
+   exec(c,"INSERT INTO cinemas(name,address,area_id,phone) VALUES('NOIR Đà Nẵng (demo)','Địa chỉ minh hoạ tại Đà Nẵng',2,'02360000000')");
+   exec(c,"UPDATE rooms SET cinema_id=2 WHERE id=3");
+   LocalDate today=LocalDate.now(clock.withZone(ZoneId.of("Asia/Ho_Chi_Minh")));
+   exec(c,"UPDATE movies SET release_date=?,end_date=?,country='Việt Nam',language='Tiếng Việt',presentation='2D · Phụ đề tiếng Việt'",today.toString(),today.plusDays(30).toString());
+   exec(c,"UPDATE movies SET release_date=? WHERE id IN(9,10)",today.plusDays(1).toString());
    ZonedDateTime base=ZonedDateTime.now(clock).withZoneSameInstant(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate().plusDays(1).atStartOfDay(ZoneId.of("Asia/Ho_Chi_Minh"));
    for(int day=0;day<2;day++)for(int room=1;room<=3;room++)for(int slot=0;slot<4;slot++){
     int movie=(day*12+(room-1)*4+slot)%10+1;

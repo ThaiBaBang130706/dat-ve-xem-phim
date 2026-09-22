@@ -11,4 +11,4 @@ INSERT INTO movies(title,genre,duration_minutes,age_rating,description) VALUES
 ('Đội Bóng Xóm Nhỏ','Hài',119,'P','Phim minh hoạ cho đồ án CinemaBooking. Đây là dữ liệu demo, không phải lịch chiếu thương mại.'),
 ('Bên Kia Cầu Vồng','Hoạt hình',121,'P','Phim minh hoạ cho đồ án CinemaBooking. Đây là dữ liệu demo, không phải lịch chiếu thương mại.'),
 ('Một Ngày Thật Khác','Tâm lý',123,'P','Phim minh hoạ cho đồ án CinemaBooking. Đây là dữ liệu demo, không phải lịch chiếu thương mại.');
-INSERT INTO rooms(name,rows_count,cols_count) VALUES('P1',6,8),('P2',7,8),('IMAX',8,10);
+INSERT INTO rooms(name,rows_count,cols_count,cinema_id) VALUES('P1',6,8,1),('P2',7,8,1),('IMAX',8,10,1);

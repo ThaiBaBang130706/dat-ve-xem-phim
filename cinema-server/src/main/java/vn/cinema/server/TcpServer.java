@@ -16,6 +16,7 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
  private final AuthService auth;
  private final BookingService booking;
  private final AdminService admin;
+ private final CatalogService catalog;private final MediaService media;
  private final ServerSocket listener;
  private final Set<Client> clients=ConcurrentHashMap.newKeySet();
  private final ScheduledExecutorService scheduler=Executors.newSingleThreadScheduledExecutor(r->daemon(r,"cinema-maintenance"));
@@ -33,7 +34,7 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
   return Json.obj("clients",connections,"events",journal,"requests",requests.get(),"errors",errors.get());
  }
  public TcpServer(Database db,Clock clock,int port)throws IOException {
-  auth=new AuthService(db,clock);booking=new BookingService(db,clock);admin=new AdminService(db,clock,booking);
+  auth=new AuthService(db,clock);booking=new BookingService(db,clock);admin=new AdminService(db,clock,booking);catalog=new CatalogService(db,clock);media=new MediaService(db,clock);
   booking.setEvents(this);
   listener=new ServerSocket();listener.setReuseAddress(true);listener.bind(new InetSocketAddress("0.0.0.0",port),64);
  }
@@ -162,7 +163,11 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
      for(JsonElement e:booking.movies())if(e.getAsJsonObject().get("id").getAsLong()==id)movie=e.getAsJsonObject();
      require(movie!=null,"Không tìm thấy phim.");yield movie;
     }
-    case "GET_SHOWTIMES" -> booking.shows(Json.num(d,"movieId",0));
+    case "GET_SHOWTIMES" -> catalog.shows(d);
+    case "GET_GENRES" -> catalog.genres(false);
+    case "GET_AREAS" -> catalog.areas(false);
+    case "GET_CINEMAS" -> catalog.cinemas(false,Json.num(d,"areaId",0));
+    case "GET_IMAGE" -> media.image(Validation.text(d,"id",64,64));
     case "GET_SEATMAP" -> booking.seatMap(session,number(d,"showId",1,Long.MAX_VALUE));
     case "SUBSCRIBE_SHOW" -> {
      long show=number(d,"showId",1,Long.MAX_VALUE);

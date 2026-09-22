@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.google.zxing.*;
 import com.google.zxing.common.BitMatrix;
 import java.util.*;
+import java.time.*;
 import java.util.function.Consumer;
 import javafx.animation.*;
 import javafx.fxml.*;
@@ -21,7 +22,7 @@ import vn.cinema.common.*;
 public final class MainController {
  @FXML private Label userLabel,connectionLabel,pageTitle,notice;
  @FXML private VBox content;
- private CinemaApp app;private TcpClient client;private JsonObject user;
+ private CinemaApp app;private TcpClient client;private JsonObject user;private MediaImages images;
  private boolean disposed,busy;
  private long view,currentShow,lastRevision=-1,serverOffset,holdUntil;
  private JsonObject currentMap;
@@ -30,7 +31,7 @@ public final class MainController {
  private GridPane seatGrid;private Label selectionLabel,countdownLabel;private Button holdButton,payButton,releaseButton;
  private Timeline ticker;
  public void init(CinemaApp app,TcpClient client,JsonObject user){
-  this.app=app;this.client=client;this.user=user;
+  this.app=app;this.client=client;this.user=user;images=new MediaImages(client);
   userLabel.setText(Ui.string(user,"display_name"));connectionLabel.setText("● "+client.host()+":"+client.port());
   client.onEvent(event->Ui.run(()->event(event)));
   client.onDisconnect(message->Ui.run(()->{if(!disposed){disposed=true;Ui.error(message);app.showLogin();}}));
@@ -64,11 +65,12 @@ public final class MainController {
  }
  @FXML public void home(){
   if(busy){Ui.info("Đợi yêu cầu đặt vé hiện tại hoàn tất.");return;}
-  leaveShow();pageTitle.setText("Khám phá điện ảnh");notice.setText("Chọn phim → suất chiếu → giữ ghế → xác nhận vé. Dữ liệu do server cung cấp.");
-  TextField search=Ui.field("","Tìm phim hoặc thể loại…");search.setId("movieSearch");
-  ComboBox<String> genres=new ComboBox<>();genres.getItems().add("Tất cả thể loại");genres.getSelectionModel().selectFirst();genres.setMinWidth(180);
-  HBox filters=new HBox(12,search,genres,Ui.button("Tải lại",this::home,null));HBox.setHgrow(search,Priority.ALWAYS);
-  Label loading=Ui.label("Đang tải danh mục phim từ server…","muted");loading.setId("loading");
+  leaveShow();pageTitle.setText("Khám phá điện ảnh");notice.setText("Chọn phim, rạp và ngày chiếu để đặt vé.");
+  TextField search=Ui.field("","Tìm phim, thể loại hoặc diễn viên…");search.setId("movieSearch");
+  ComboBox<String> genres=new ComboBox<>();genres.getItems().add("Tất cả thể loại");genres.getSelectionModel().selectFirst();genres.setPrefWidth(170);genres.setId("genreFilter");
+  ComboBox<String> status=new ComboBox<>();status.getItems().setAll("Tất cả phim","Đang chiếu","Sắp chiếu","Chưa có lịch chiếu","Đã ngừng chiếu");status.getSelectionModel().selectFirst();status.setId("screeningFilter");
+  HBox filters=new HBox(10,search,genres,status,Ui.button("Tải lại",this::home,null));HBox.setHgrow(search,Priority.ALWAYS);
+  Label loading=Ui.label("Đang tải danh mục phim…","muted");loading.setId("loading");
   VBox body=new VBox(24);FlowPane cards=new FlowPane(24,24);cards.setId("movieCards");
   ScrollPane scroll=new ScrollPane(body);scroll.setFitToWidth(true);VBox.setVgrow(scroll,Priority.ALWAYS);
   cards.prefWrapLengthProperty().bind(scroll.widthProperty().subtract(30));content.getChildren().addAll(filters,loading,scroll);
@@ -76,42 +78,66 @@ public final class MainController {
    JsonArray movies=value.getAsJsonArray();
    if(!movies.isEmpty()){
     JsonObject featured=movies.get(0).getAsJsonObject();
-    Label title=Ui.label(Ui.string(featured,"title"),"hero-title");title.setMaxWidth(600);
-    Label desc=Ui.label(Ui.string(featured,"description"),"light-text");desc.setMaxWidth(620);desc.setMaxHeight(72);
-    VBox copy=new VBox(16,Ui.label("NOIR SELECTION · HẸN NHAU Ở RẠP","eyebrow"),title,Ui.label(Ui.string(featured,"genre")+"  ·  "+Ui.string(featured,"duration_minutes")+" phút  ·  "+Ui.string(featured,"age_rating"),"muted"),desc,Ui.button("Xem lịch & đặt vé",()->detail(featured),"primary"));
+    Label title=Ui.label(Ui.string(featured,"title"),"hero-title");title.setMaxWidth(500);
+    Label desc=Ui.label(Ui.string(featured,"description"),"light-text");desc.setMaxWidth(520);desc.setMaxHeight(72);
+    VBox copy=new VBox(14,Ui.label("NOIR SELECTION · HẸN NHAU Ở RẠP","eyebrow"),title,Ui.label(Ui.string(featured,"genre")+"  ·  "+Ui.string(featured,"duration_minutes")+" phút  ·  "+Ui.string(featured,"screening_label"),"muted"),desc,Ui.button("Xem lịch & đặt vé",()->detail(featured),"primary"));
     copy.setAlignment(Pos.CENTER_LEFT);HBox.setHgrow(copy,Priority.ALWAYS);
-    HBox hero=new HBox(28,copy,PosterArt.create(Json.num(featured,"id",0),Ui.string(featured,"title"),170,255));hero.getStyleClass().add("hero");hero.setAlignment(Pos.CENTER_LEFT);body.getChildren().add(hero);
+    boolean hasBanner=!Ui.string(featured,"banner_url").isBlank();
+    HBox hero=new HBox(24,copy,images.movie(featured,hasBanner,hasBanner?280:170,hasBanner?190:255));hero.getStyleClass().add("hero");hero.setAlignment(Pos.CENTER_LEFT);body.getChildren().add(hero);
    }
-   body.getChildren().addAll(Ui.label("Phim đang chiếu","section-title"),cards);
-   TreeSet<String> genreSet=new TreeSet<>();movies.forEach(e->genreSet.add(Ui.string(e.getAsJsonObject(),"genre")));genres.getItems().addAll(genreSet);
+   body.getChildren().addAll(Ui.label("Danh mục phim","section-title"),cards);
+   TreeSet<String> genreSet=new TreeSet<>();for(JsonElement e:movies)genreSet.addAll(genreNames(e.getAsJsonObject()));genres.getItems().addAll(genreSet);
    Runnable filter=()->{
     cards.getChildren().clear();String term=search.getText().strip().toLowerCase(Locale.ROOT);
     for(JsonElement e:movies){JsonObject movie=e.getAsJsonObject();String title=Ui.string(movie,"title"),genre=Ui.string(movie,"genre");
-     if(!(title+" "+genre).toLowerCase(Locale.ROOT).contains(term) || genres.getSelectionModel().getSelectedIndex()>0&&!genre.equals(genres.getValue()))continue;
-     VBox card=new VBox(10,PosterArt.create(Json.num(movie,"id",0),title,200,300),Ui.label(genre+" · "+Ui.string(movie,"duration_minutes")+" phút","muted"),Ui.label("Phân loại: "+Ui.string(movie,"age_rating"),"muted"),Ui.button("Xem lịch chiếu",()->detail(movie),"primary"));
-     card.getStyleClass().add("movie-card");card.setPrefWidth(200);cards.getChildren().add(card);
+     if(!(title+" "+genre+" "+Ui.string(movie,"cast_names")).toLowerCase(Locale.ROOT).contains(term) || genres.getSelectionModel().getSelectedIndex()>0&&!genreNames(movie).contains(genres.getValue()) || status.getSelectionModel().getSelectedIndex()>0&&!status.getValue().equals(Ui.string(movie,"screening_label")))continue;
+     Label name=Ui.label(title,"section-title");name.setMinHeight(48);name.setMaxHeight(72);
+     VBox card=new VBox(10,images.movie(movie,false,200,300),name,Ui.label(Ui.string(movie,"screening_label"),"eyebrow"),Ui.label(genre+" · "+Ui.string(movie,"duration_minutes")+" phút","muted"),Ui.label("Phân loại: "+Ui.string(movie,"age_rating"),"muted"),Ui.button("Xem lịch chiếu",()->detail(movie),"primary"));
+     card.getStyleClass().add("movie-card");card.setPrefWidth(200);card.setMaxWidth(200);cards.getChildren().add(card);
     }
-    if(cards.getChildren().isEmpty())cards.getChildren().add(Ui.label("Chưa có phim phù hợp. Thử từ khoá hoặc thể loại khác.","muted"));
+    if(cards.getChildren().isEmpty())cards.getChildren().add(Ui.label("Chưa có phim phù hợp. Thử từ khoá, thể loại hoặc trạng thái khác.","muted"));
    };
-   search.textProperty().addListener((o,a,b)->filter.run());genres.valueProperty().addListener((o,a,b)->filter.run());filter.run();
+   search.textProperty().addListener((o,a,b)->filter.run());genres.valueProperty().addListener((o,a,b)->filter.run());status.valueProperty().addListener((o,a,b)->filter.run());filter.run();
   });
  }
+ private static Set<String> genreNames(JsonObject movie){
+  Set<String> names=new LinkedHashSet<>();if(movie.has("genres"))for(JsonElement e:movie.getAsJsonArray("genres"))names.add(Ui.string(e.getAsJsonObject(),"name"));
+  if(names.isEmpty())names.addAll(Arrays.asList(Ui.string(movie,"genre").split(",\\s*")));return names;
+ }
+ private record Place(long id,String name){@Override public String toString(){return name;}}
  private void detail(JsonObject movie){
   leaveShow();pageTitle.setText(Ui.string(movie,"title"));notice.setText(Ui.string(movie,"genre")+" · "+Ui.string(movie,"duration_minutes")+" phút · "+Ui.string(movie,"age_rating"));
-  content.getChildren().addAll(Ui.button("← Danh sách phim",this::home,null),Ui.label(Ui.string(movie,"description"),null),Ui.label("Chọn suất chiếu","section-title"));
-  VBox shows=new VBox(10);ScrollPane scroll=new ScrollPane(shows);scroll.setFitToWidth(true);VBox.setVgrow(scroll,Priority.ALWAYS);content.getChildren().add(scroll);
-  load("GET_SHOWTIMES",Json.obj("movieId",Json.num(movie,"id",0)),value->{
-   if(value.getAsJsonArray().isEmpty())shows.getChildren().add(Ui.label("Phim chưa có suất chiếu sắp tới.","muted"));
-   for(JsonElement e:value.getAsJsonArray()){
-    JsonObject show=e.getAsJsonObject();
-    Label label=Ui.label(Ui.date(Json.num(show,"starts_at",0))+"   /   "+Ui.string(show,"room_name"),"section-title");
-    HBox row=new HBox(20,label,new Region(),Ui.label(Ui.money(Json.num(show,"price_vnd",0)),null),Ui.button("Chọn ghế",()->seats(show),"primary"));
-    HBox.setHgrow(row.getChildren().get(1),Priority.ALWAYS);row.setAlignment(Pos.CENTER_LEFT);row.getStyleClass().add("card");shows.getChildren().add(row);
-   }
-  });
+  VBox body=new VBox(16);ScrollPane scroll=new ScrollPane(body);scroll.setFitToWidth(true);VBox.setVgrow(scroll,Priority.ALWAYS);content.getChildren().add(scroll);
+  body.getChildren().add(Ui.button("← Danh sách phim",this::home,null));
+  if(!Ui.string(movie,"banner_url").isBlank())body.getChildren().add(images.movie(movie,true,820,205));
+  VBox copy=new VBox(9,Ui.label(Ui.string(movie,"screening_label"),"eyebrow"),Ui.label(Ui.string(movie,"description"),null));copy.setMinWidth(250);HBox.setHgrow(copy,Priority.ALWAYS);
+  String[][] details={{"Đạo diễn","director"},{"Diễn viên","cast_names"},{"Quốc gia","country"},{"Ngôn ngữ","language"},{"Phiên bản","presentation"},{"Khởi chiếu","release_date"},{"Ngừng chiếu","end_date"}};
+  for(String[] field:details)if(!Ui.string(movie,field[1]).isBlank())copy.getChildren().add(Ui.label(field[0]+": "+Ui.string(movie,field[1]),"muted"));
+  Button trailer=Ui.button("Xem trailer",()->MediaImages.trailer(app,Ui.string(movie,"trailer_url")),"primary");trailer.setId("trailerButton");trailer.setDisable(Ui.string(movie,"trailer_url").isBlank());trailer.setTooltip(new Tooltip(trailer.isDisabled()?"Phim chưa có trailer":"Mở trailer trong trình duyệt"));copy.getChildren().add(trailer);
+  body.getChildren().addAll(new HBox(20,images.movie(movie,false,150,225),copy),Ui.label("Chọn rạp & suất chiếu","section-title"));
+  ComboBox<Place> area=new ComboBox<>(),cinema=new ComboBox<>();area.setId("areaFilter");cinema.setId("cinemaFilter");area.setPrefWidth(170);cinema.setPrefWidth(230);
+  DatePicker day=new DatePicker();day.setEditable(false);day.setPromptText("Tất cả ngày chiếu");day.setId("showDateFilter");day.setPrefWidth(170);
+  FlowPane filters=new FlowPane(10,10,area,cinema,day,Ui.button("Bỏ lọc",()->{area.getSelectionModel().selectFirst();cinema.getSelectionModel().selectFirst();day.setValue(null);},null));body.getChildren().add(filters);
+  VBox shows=new VBox(12);shows.setId("showCards");shows.getChildren().add(Ui.label("Đang tải lịch chiếu…","muted"));body.getChildren().add(shows);
+  load("GET_CINEMAS",Json.obj(),places->load("GET_SHOWTIMES",Json.obj("movieId",Json.num(movie,"id",0)),value->{
+   JsonArray cinemas=places.getAsJsonArray(),schedules=value.getAsJsonArray();area.getItems().add(new Place(0,"Tất cả khu vực"));
+   Set<Long> seen=new HashSet<>();for(JsonElement e:cinemas){JsonObject c=e.getAsJsonObject();long id=Json.num(c,"area_id",0);if(seen.add(id))area.getItems().add(new Place(id,Ui.string(c,"area_name")));}area.getSelectionModel().selectFirst();
+   Runnable render=()->{
+    shows.getChildren().clear();long areaId=area.getValue()==null?0:area.getValue().id(),cinemaId=cinema.getValue()==null?0:cinema.getValue().id();
+    for(JsonElement e:schedules){JsonObject show=e.getAsJsonObject();
+     if(areaId>0 && areaId!=Json.num(show,"area_id",0) || cinemaId>0 && cinemaId!=Json.num(show,"cinema_id",0) || day.getValue()!=null && !day.getValue().equals(Instant.ofEpochMilli(Json.num(show,"starts_at",0)).atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate()))continue;
+     VBox info=new VBox(6,Ui.label(Ui.string(show,"cinema_name")+" · "+Ui.string(show,"area_name"),"section-title"),Ui.label(Ui.string(show,"address")+" · "+Ui.string(show,"phone"),"muted"),Ui.label(Ui.date(Json.num(show,"starts_at",0))+" / "+Ui.string(show,"room_name"),null));HBox.setHgrow(info,Priority.ALWAYS);
+     HBox row=new HBox(14,info,new VBox(10,Ui.label(Ui.money(Json.num(show,"price_vnd",0)),null),Ui.button("Chọn ghế",()->seats(show),"primary")));row.setAlignment(Pos.CENTER_LEFT);row.getStyleClass().add("card");
+     if(!Ui.string(show,"cinema_image_url").isBlank())row.getChildren().add(0,images.view(Ui.string(show,"cinema_image_url"),Json.num(show,"cinema_id",0),Ui.string(show,"cinema_name"),110,75));shows.getChildren().add(row);
+    }
+    if(shows.getChildren().isEmpty())shows.getChildren().add(Ui.label("Chưa có suất chiếu phù hợp với ngày và rạp đã chọn.","muted"));
+   };
+   Runnable populate=()->{cinema.getItems().setAll(new Place(0,"Tất cả rạp"));long id=area.getValue()==null?0:area.getValue().id();for(JsonElement e:cinemas){JsonObject c=e.getAsJsonObject();if(id==0 || id==Json.num(c,"area_id",0))cinema.getItems().add(new Place(Json.num(c,"id",0),Ui.string(c,"name")));}cinema.getSelectionModel().selectFirst();};
+   area.valueProperty().addListener((o,a,b)->{populate.run();render.run();});cinema.valueProperty().addListener((o,a,b)->render.run());day.valueProperty().addListener((o,a,b)->render.run());populate.run();render.run();
+  }));
  }
  private void seats(JsonObject show){
-  leaveShow();currentShow=Json.num(show,"id",0);pageTitle.setText(Ui.string(show,"title"));notice.setText(Ui.string(show,"room_name")+" · "+Ui.date(Json.num(show,"starts_at",0)));
+  leaveShow();currentShow=Json.num(show,"id",0);pageTitle.setText(Ui.string(show,"title"));notice.setText(Ui.string(show,"cinema_name")+" / "+Ui.string(show,"room_name")+" · "+Ui.date(Json.num(show,"starts_at",0)));
   Label screen=Ui.label("M À N   H Ì N H","screen");screen.setMaxWidth(Double.MAX_VALUE);screen.setAlignment(Pos.CENTER);
   seatGrid=new GridPane();seatGrid.setHgap(7);seatGrid.setVgap(7);seatGrid.setAlignment(Pos.CENTER);seatGrid.setPadding(new Insets(20));
   ScrollPane scroll=new ScrollPane(seatGrid);scroll.setFitToWidth(true);VBox.setVgrow(scroll,Priority.ALWAYS);
