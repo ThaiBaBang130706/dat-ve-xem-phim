@@ -71,6 +71,9 @@ public final class MediaImages {
   Label message=Ui.label("Trailer phát trong trình duyệt. Nếu video không mở được, sao chép liên kết để thử lại.","muted");TextField link=Ui.field(url,"");link.setEditable(false);
   Runnable open=()->{try{app.getHostServices().showDocument(url);}catch(Exception e){message.setText("Không mở được trình duyệt. Anh có thể sao chép liên kết bên dưới.");}};
   Button copy=Ui.button("Sao chép liên kết",()->{ClipboardContent data=new ClipboardContent();data.putString(url);Clipboard.getSystemClipboard().setContent(data);message.setText("Đã sao chép liên kết trailer.");},null);
-  dialog.getDialogPane().setContent(new VBox(12,message,link,new HBox(10,Ui.button("Mở trình duyệt",open,"primary"),copy)));dialog.getDialogPane().setPrefWidth(600);dialog.setOnShown(e->open.run());dialog.showAndWait();
+  VBox content=new VBox(12);String attribution=vn.cinema.common.DemoTrailers.notice(url);
+  if(!attribution.isEmpty()){dialog.setTitle("Trailer minh hoạ");Label note=Ui.label(attribution,"muted");note.setWrapText(true);content.getChildren().add(note);}
+  content.getChildren().addAll(message,link,new HBox(10,Ui.button("Mở trình duyệt",open,"primary"),copy));
+  dialog.getDialogPane().setContent(content);dialog.getDialogPane().setPrefWidth(600);dialog.setOnShown(e->open.run());dialog.showAndWait();
  }
 }

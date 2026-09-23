@@ -26,6 +26,17 @@ Các chức năng này thuộc ứng dụng **JavaFX qua TCP/IP** (`cinema-clien
 
 ## 3. Trailer
 
+10 phim hư cấu có sẵn được gắn luân phiên **2 video minh hoạ** từ Blender Foundation, do W3C lưu trữ:
+
+| Video gốc | Phim mẫu sử dụng |
+|---|---|
+| [Big Buck Bunny — trailer](https://media.w3.org/2010/05/bunny/trailer.mp4) | Hẹn Nhau Ở Huế, Mùa Hè Của Chúng Ta, Bức Thư Chưa Gửi, Đội Bóng Xóm Nhỏ, Bên Kia Cầu Vồng, Một Ngày Thật Khác |
+| [Sintel — teaser](https://media.w3.org/2010/05/sintel/trailer.mp4) | Chuyến Tàu Bình Minh, Mật Mã Đại Dương, Ngôi Nhà Cuối Phố, Hành Trình Sao Hoả |
+
+Nguồn: [trang minh hoạ video của W3C](https://www.w3.org/2010/05/video/mediaevents.html), ghi công Blender Foundation. Ứng dụng chỉ liên kết đến video, không chép video vào repository. Nút **Xem trailer minh hoạ**, tên video gốc và thông báo cạnh nút/trong hộp thoại giúp phân biệt với trailer thật của phim.
+
+**Cập nhật database cũ:** kéo mã mới, build và khởi động lại server. Migration phiên bản 2 chỉ điền trailer đang trống của phim có tên và mô tả khớp dữ liệu mẫu ban đầu. Giữ nguyên trailer đã nhập, phim đã đổi tên/mô tả, suất chiếu và vé. Không cần xoá database. Migration chạy một lần; sau đó admin có thể thay hoặc xoá trailer mà server không tự gắn lại. Database mới cũng có sẵn các video này.
+
 Nhập liên kết YouTube hoặc URL video vào **Liên kết trailer**, sau đó lưu. Người dùng mở phim và bấm **Xem trailer** để phát bằng trình duyệt mặc định. Cửa sổ có **Mở trình duyệt** và **Sao chép liên kết** khi trình duyệt/video không mở được. Nếu chưa khai báo trailer, nút bị vô hiệu hoá và có chú thích. Trailer và ảnh URL ngoài cần mạng Internet; ảnh tải lên server vẫn xem được trong LAN.
 
 ## 4. Người dùng tìm và đặt vé

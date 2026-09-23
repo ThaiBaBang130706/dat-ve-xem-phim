@@ -72,6 +72,7 @@ public final class Database {
    String catalog=new String(Objects.requireNonNull(getClass().getResourceAsStream("/seed.sql")).readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);
    try(Statement statement=c.createStatement()){for(String sql:catalog.split(";"))if(!sql.isBlank())statement.execute(sql);}
    CatalogMigration.importGenres(c);
+   DemoTrailerMigration.populate(c);
    exec(c,"UPDATE areas SET name='TP Huế' WHERE id=1");
    exec(c,"INSERT INTO areas(name) VALUES('Đà Nẵng')");
    exec(c,"UPDATE cinemas SET name='NOIR Huế (demo)',address='Địa chỉ minh hoạ tại TP Huế',phone='02340000000' WHERE id=1");
