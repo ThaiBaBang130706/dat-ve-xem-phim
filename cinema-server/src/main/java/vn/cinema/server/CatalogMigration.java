@@ -33,6 +33,10 @@ final class CatalogMigration {
     importGenres(c);
     exec(c,"INSERT INTO schema_migrations(version) VALUES(1)");
    }
+   if(one(c,"SELECT version FROM schema_migrations WHERE version=2")==null){
+    DemoTrailerMigration.populate(c);
+    exec(c,"INSERT INTO schema_migrations(version) VALUES(2)");
+   }
    c.commit();
   }catch(Exception e){c.rollback();throw e;}finally{c.setAutoCommit(true);}
  }

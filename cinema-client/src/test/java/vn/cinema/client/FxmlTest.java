@@ -91,7 +91,7 @@ class FxmlTest {
    java.io.ByteArrayOutputStream encoded=new java.io.ByteArrayOutputStream();javax.imageio.ImageIO.write(poster,"png",encoded);
    String media=admin.request("ADMIN_UPLOAD_IMAGE",vn.cinema.common.Json.obj("data",java.util.Base64.getEncoder().encodeToString(encoded.toByteArray()))).get(5,TimeUnit.SECONDS).getAsJsonObject().get("url").getAsString();
    com.google.gson.JsonObject film=admin.request("ADMIN_LIST_MOVIES",vn.cinema.common.Json.obj()).get(5,TimeUnit.SECONDS).getAsJsonArray().get(0).getAsJsonObject();
-   film.addProperty("poster_url",media);film.addProperty("banner_url",media);film.addProperty("director","Đạo diễn kiểm thử");film.addProperty("trailer_url","https://example.org/trailer");
+   film.addProperty("poster_url",media);film.addProperty("banner_url",media);film.addProperty("director","Đạo diễn kiểm thử");
    admin.request("ADMIN_SAVE_MOVIE",film).get(5,TimeUnit.SECONDS);
    com.google.gson.JsonObject user=customer.request("LOGIN",vn.cinema.common.Json.obj("username","user1","password","User@1234")).get(5,TimeUnit.SECONDS).getAsJsonObject().getAsJsonObject("user");
    other.request("LOGIN",vn.cinema.common.Json.obj("username","user2","password","User@1234")).get(5,TimeUnit.SECONDS);
@@ -99,7 +99,8 @@ class FxmlTest {
    awaitButton(stage,"Xem lịch chiếu");fx(()->{screenshot(stage,"customer-home");button(stage,"Xem lịch chiếu").fire();return null;});
    awaitButton(stage,"Chọn ghế");
    fx(()->{
-    assertFalse(button(stage,"Xem trailer").isDisabled());
+    assertFalse(button(stage,"Xem trailer minh hoạ").isDisabled());
+    var trailerNotice=(javafx.scene.control.Label)stage.getScene().getRoot().lookup("#trailerNotice");assertNotNull(trailerNotice);assertTrue(trailerNotice.getText().contains("Big Buck Bunny"));
     var root=stage.getScene().getRoot();assertNotNull(root.lookup("#areaFilter"));assertNotNull(root.lookup("#cinemaFilter"));
     javafx.scene.control.DatePicker day=(javafx.scene.control.DatePicker)root.lookup("#showDateFilter");day.setValue(java.time.LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).plusMonths(2));assertNull(button(stage,"Chọn ghế"));day.setValue(null);assertNotNull(button(stage,"Chọn ghế"));
     screenshot(stage,"movie-detail-filters");button(stage,"Chọn ghế").fire();return null;
@@ -156,4 +157,3 @@ class FxmlTest {
  }
  @AfterAll static void stop(){Platform.exit();}
 }
-

@@ -113,7 +113,9 @@ public final class MainController {
   VBox copy=new VBox(9,Ui.label(Ui.string(movie,"screening_label"),"eyebrow"),Ui.label(Ui.string(movie,"description"),null));copy.setMinWidth(250);HBox.setHgrow(copy,Priority.ALWAYS);
   String[][] details={{"Đạo diễn","director"},{"Diễn viên","cast_names"},{"Quốc gia","country"},{"Ngôn ngữ","language"},{"Phiên bản","presentation"},{"Khởi chiếu","release_date"},{"Ngừng chiếu","end_date"}};
   for(String[] field:details)if(!Ui.string(movie,field[1]).isBlank())copy.getChildren().add(Ui.label(field[0]+": "+Ui.string(movie,field[1]),"muted"));
-  Button trailer=Ui.button("Xem trailer",()->MediaImages.trailer(app,Ui.string(movie,"trailer_url")),"primary");trailer.setId("trailerButton");trailer.setDisable(Ui.string(movie,"trailer_url").isBlank());trailer.setTooltip(new Tooltip(trailer.isDisabled()?"Phim chưa có trailer":"Mở trailer trong trình duyệt"));copy.getChildren().add(trailer);
+  String trailerUrl=Ui.string(movie,"trailer_url"),trailerNotice=vn.cinema.common.DemoTrailers.notice(trailerUrl);
+  Button trailer=Ui.button(trailerNotice.isEmpty()?"Xem trailer":"Xem trailer minh hoạ",()->MediaImages.trailer(app,trailerUrl),"primary");trailer.setId("trailerButton");trailer.setDisable(trailerUrl.isBlank());trailer.setTooltip(new Tooltip(trailer.isDisabled()?"Phim chưa có trailer":"Mở trailer trong trình duyệt"));copy.getChildren().add(trailer);
+  if(!trailerNotice.isEmpty()){Label attribution=Ui.label(trailerNotice,"muted");attribution.setId("trailerNotice");attribution.setWrapText(true);copy.getChildren().add(attribution);}
   body.getChildren().addAll(new HBox(20,images.movie(movie,false,150,225),copy),Ui.label("Chọn rạp & suất chiếu","section-title"));
   ComboBox<Place> area=new ComboBox<>(),cinema=new ComboBox<>();area.setId("areaFilter");cinema.setId("cinemaFilter");area.setPrefWidth(170);cinema.setPrefWidth(230);
   DatePicker day=new DatePicker();day.setEditable(false);day.setPromptText("Tất cả ngày chiếu");day.setId("showDateFilter");day.setPrefWidth(170);
@@ -257,4 +259,3 @@ public final class MainController {
   client.request("LOGOUT",Json.obj()).whenComplete((v,e)->Ui.run(()->{dispose();app.showLogin();}));
  }
 }
-
