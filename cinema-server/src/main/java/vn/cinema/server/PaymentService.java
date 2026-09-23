@@ -15,7 +15,7 @@ public final class PaymentService {
  public boolean enabled(){return provider.enabled();}
  public synchronized JsonObject create(Session s,long show,List<String> requested,String request,String coupon)throws Exception {
   require(enabled(),"Chưa cấu hình payOS. Quản trị cần đặt khoá thanh toán trên máy chủ.");
-  List<String> seats=BookingService.validSeats(requested);Collections.sort(seats=new ArrayList<>(seats));
+  List<String> seats=new ArrayList<>(BookingService.validSeats(requested));Collections.sort(seats);
   String labels=String.join(",",seats);require(request.matches("[A-Za-z0-9_-]{8,64}"),"Mã yêu cầu không hợp lệ.");
   JsonObject intent=db.write(c->{
    AuthService.check(c,s,false);

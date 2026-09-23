@@ -70,7 +70,7 @@ public final class MainController {
   TextField search=Ui.field("","Tìm phim, thể loại hoặc diễn viên…");search.setId("movieSearch");
   ComboBox<String> genres=new ComboBox<>();genres.getItems().add("Tất cả thể loại");genres.getSelectionModel().selectFirst();genres.setPrefWidth(170);genres.setId("genreFilter");
   ComboBox<String> status=new ComboBox<>();status.getItems().setAll("Tất cả phim","Đang chiếu","Sắp chiếu","Chưa có lịch chiếu","Đã ngừng chiếu");status.getSelectionModel().selectFirst();status.setId("screeningFilter");
-  HBox filters=new HBox(10,search,genres,status,Ui.button("Tải lại",this::home,null));HBox.setHgrow(search,Priority.ALWAYS);
+  HBox filters=new HBox(10,search,genres,status,Ui.button("Tải lại",this::home,null),Ui.button("Ưu đãi",this::promotions,null));HBox.setHgrow(search,Priority.ALWAYS);
   Label loading=Ui.label("Đang tải danh mục phim…","muted");loading.setId("loading");
   VBox body=new VBox(24);FlowPane cards=new FlowPane(24,24);cards.setId("movieCards");
   ScrollPane scroll=new ScrollPane(body);scroll.setFitToWidth(true);VBox.setVgrow(scroll,Priority.ALWAYS);
@@ -221,14 +221,19 @@ public final class MainController {
    });
   });
  }
+ private void promotions(){
+  Ui.async(client.request("GET_PROMOTIONS",Json.obj()),value->{Dialog<Void> dialog=Ui.themed(new Dialog<>());dialog.setTitle("Ưu đãi đang áp dụng");dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);VBox box=new VBox(12);box.setPadding(new Insets(16));
+   for(JsonElement e:value.getAsJsonArray()){JsonObject p=e.getAsJsonObject();box.getChildren().add(Ui.label(Ui.string(p,"code")+" · Giảm "+Json.num(p,"percent",0)+"% (tối đa "+Ui.money(Json.num(p,"max_discount",0))+")\nĐơn từ "+Ui.money(Json.num(p,"min_total",0))+" · Hết hạn "+Ui.date(Json.num(p,"ends_at",0))+"\nTối đa "+Json.num(p,"per_user",0)+" lượt / khách","muted"));}
+   if(box.getChildren().isEmpty())box.getChildren().add(Ui.label("Hiện chưa có ưu đãi.","muted"));ScrollPane scroll=new ScrollPane(box);scroll.setFitToWidth(true);scroll.setPrefViewportWidth(480);scroll.setPrefViewportHeight(350);dialog.getDialogPane().setContent(scroll);dialog.showAndWait();});
+ }
  private void paymentDialog(JsonObject payment){
   Dialog<Void> dialog=Ui.themed(new Dialog<>());dialog.setTitle("QR payOS · "+Ui.money(Json.num(payment,"amount",0)));dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
   VBox box=new VBox(12);box.setPadding(new Insets(20));Label status=Ui.label(Ui.string(payment,"status"),"section-title");box.getChildren().add(status);
   String qr=Ui.string(payment,"qrCode");
-  if(!qr.isBlank())try{BitMatrix matrix=new MultiFormatWriter().encode(qr,BarcodeFormat.QR_CODE,260,260);WritableImage image=new WritableImage(260,260);for(int y=0;y<260;y++)for(int x=0;x<260;x++)image.getPixelWriter().setColor(x,y,matrix.get(x,y)?Color.BLACK:Color.WHITE);box.getChildren().add(new ImageView(image));}catch(WriterException ignored){}
+  if("PENDING".equals(Ui.string(payment,"status")) && Json.num(payment,"expires_at",0)>System.currentTimeMillis()+serverOffset && !qr.isBlank())try{BitMatrix matrix=new MultiFormatWriter().encode(qr,BarcodeFormat.QR_CODE,260,260);WritableImage image=new WritableImage(260,260);for(int y=0;y<260;y++)for(int x=0;x<260;x++)image.getPixelWriter().setColor(x,y,matrix.get(x,y)?Color.BLACK:Color.WHITE);box.getChildren().add(new ImageView(image));}catch(WriterException ignored){}
   String url=Ui.string(payment,"checkoutUrl");
-  if(url.startsWith("https://pay.payos.vn/"))box.getChildren().add(Ui.button("Mở trang thanh toán payOS",()->app.getHostServices().showDocument(url),"primary"));
-  box.getChildren().addAll(Ui.label("Hạn thanh toán: "+Ui.date(Json.num(payment,"expires_at",0))+"\nServer tự kiểm tra giao dịch. Không chuyển tiền sau hạn này.","muted"),Ui.button("Kiểm tra trạng thái",()->Ui.async(client.request("GET_PAYMENT",Json.obj("paymentId",Json.num(payment,"id",0))),v->status.setText(Ui.string(v.getAsJsonObject(),"status"))),null));
+  if("PENDING".equals(Ui.string(payment,"status")) && Json.num(payment,"expires_at",0)>System.currentTimeMillis()+serverOffset && url.startsWith("https://pay.payos.vn/"))box.getChildren().add(Ui.button("Mở trang thanh toán payOS",()->app.getHostServices().showDocument(url),"primary"));
+  box.getChildren().addAll(Ui.label("Hạn thanh toán: "+Ui.date(Json.num(payment,"expires_at",0))+"\nServer tự kiểm tra giao dịch. Không chuyển tiền sau hạn này.","muted"),Ui.button("Kiểm tra trạng thái",()->Ui.async(client.request("GET_PAYMENT",Json.obj("paymentId",Json.num(payment,"id",0))),v->{dialog.close();paymentDialog(v.getAsJsonObject());}),null));
   dialog.getDialogPane().setContent(box);dialog.showAndWait();
  }
  private void payments(){
