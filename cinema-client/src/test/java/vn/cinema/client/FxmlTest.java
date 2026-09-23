@@ -44,7 +44,7 @@ class FxmlTest {
        assertFalse(buttons.contains("Phim đang chiếu"));assertFalse(buttons.contains("Vé của tôi"));
        javafx.scene.control.TabPane tabs=(javafx.scene.control.TabPane)root.lookup("#tabs");
        assertNotNull(tabs);
-       assertEquals(java.util.List.of("Tổng quan","Phim","Phòng chiếu","Suất chiếu","Khách hàng","Đơn đặt vé","Vé theo ghế","Nhật ký","Thể loại","Khu vực","Rạp"),tabs.getTabs().stream().map(javafx.scene.control.Tab::getText).toList());
+       assertEquals(java.util.List.of("Tổng quan","Phim","Phòng chiếu","Suất chiếu","Khách hàng","Đơn đặt vé","Vé theo ghế","Nhật ký","Thể loại","Khu vực","Rạp","Khuyến mãi","Thanh toán QR"),tabs.getTabs().stream().map(javafx.scene.control.Tab::getText).toList());
       }else{
        assertTrue(buttons.contains("Phim đang chiếu"));assertTrue(buttons.contains("Vé của tôi"));
        assertFalse(buttons.contains("Quản lý rạp"));assertNull(root.lookup("#tabs"));
@@ -156,4 +156,5 @@ class FxmlTest {
  }
  @AfterAll static void stop(){Platform.exit();}
 }
+
 

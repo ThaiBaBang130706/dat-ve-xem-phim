@@ -21,6 +21,15 @@ jobs:
           cache: maven
       - name: Build and test Java modules
         run: xvfb-run -a mvn -B verify
+      - uses: actions/setup-node@v4
+        if: matrix.java == 17
+        with:
+          node-version: '22'
+      - name: Install browser for real web integration test
+        if: matrix.java == 17
+        run: |
+          npm install --prefix target/browser --no-audit --no-fund playwright@1.62.1
+          target/browser/node_modules/.bin/playwright install --with-deps chromium
       - name: Smoke test packaged server over TCP and HTTP
         run: |
           mkdir -p target
@@ -28,6 +37,12 @@ jobs:
           CINEMA_PID=$!
           trap 'kill "$CINEMA_PID" 2>/dev/null || true' EXIT
           python3 scripts/smoke_lan.py
+          if [ "${{ matrix.java }}" = "17" ]; then
+            CINEMA_TCP_PORT=15000 WEB_PORT=18080 node cinema-web/server.mjs > target/web-smoke.log 2>&1 &
+            WEB_PID=$!
+            trap 'kill "$CINEMA_PID" "$WEB_PID" 2>/dev/null || true' EXIT
+            NODE_PATH="$PWD/target/browser/node_modules" node scripts/live_web_smoke.cjs
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: cinema-server-jdk-${{ matrix.java }}
@@ -41,7 +56,9 @@ jobs:
         if: always()
         with:
           name: javafx-preview-jdk-${{ matrix.java }}
-          path: '**/target/ui-preview/*.png'
+          path: |
+            **/target/ui-preview/*.png
+            target/web-preview/*.png
   dashboard:
     runs-on: ubuntu-latest
     timeout-minutes: 10
