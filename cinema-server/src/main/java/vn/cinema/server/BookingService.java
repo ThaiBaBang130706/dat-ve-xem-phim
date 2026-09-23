@@ -29,17 +29,13 @@ public final class BookingService {
  private void bump(long show){revisions.merge(show,1L,Long::sum);}
  public void publish(long show){ReentrantLock l=lock(show);l.lock();try{bump(show);}finally{l.unlock();}changed(show);}
 
- public JsonArray movies()throws Exception {
-  return db.read(c->rows(c,"SELECT * FROM movies WHERE active=1 ORDER BY id"));
- }
- public JsonArray shows(long movie)throws Exception {
-  return db.read(c->rows(c,"SELECT s.*,m.title,m.genre,m.age_rating,m.duration_minutes,r.name AS room_name,r.rows_count,r.cols_count FROM showtimes s JOIN movies m ON m.id=s.movie_id JOIN rooms r ON r.id=s.room_id WHERE s.status='OPEN' AND m.active=1 AND r.active=1 AND s.starts_at>? AND (?=0 OR s.movie_id=?) ORDER BY s.starts_at,s.id",clock.millis(),movie,movie));
- }
+ public JsonArray movies()throws Exception {return new CatalogService(db,clock).movies(false);}
+ public JsonArray shows(long movie)throws Exception {return new CatalogService(db,clock).shows(Json.obj("movieId",movie));}
  public JsonObject seatMap(Session session,long show)throws Exception {expire(show);return snapshot(session,show);}
  public JsonObject snapshot(Session session,long show)throws Exception {
   ReentrantLock l=lock(show);l.lock();
   try{return db.read(c->{
-   JsonObject info=one(c,"SELECT s.*,m.title,r.name AS room_name,r.rows_count,r.cols_count FROM showtimes s JOIN movies m ON m.id=s.movie_id JOIN rooms r ON r.id=s.room_id WHERE s.id=?",show);
+   JsonObject info=one(c,"SELECT s.*,m.title,ci.name AS cinema_name,ci.address,a.name AS area_name,r.name AS room_name,r.rows_count,r.cols_count FROM showtimes s JOIN movies m ON m.id=s.movie_id JOIN rooms r ON r.id=s.room_id JOIN cinemas ci ON ci.id=r.cinema_id JOIN areas a ON a.id=ci.area_id WHERE s.id=?",show);
    require(info!=null,"Không tìm thấy suất chiếu.");
    JsonArray seats=rows(c,"SELECT seat_label,status,hold_until,CASE WHEN hold_session=? THEN 1 ELSE 0 END AS is_mine FROM seats_state WHERE show_id=? ORDER BY substr(seat_label,1,1),CAST(substr(seat_label,2) AS INTEGER)",session==null?"":session.connectionId(),show);
    return Json.obj("show",info,"seats",seats,"serverTime",clock.millis(),"revision",revisions.getOrDefault(show,0L));
@@ -103,7 +99,7 @@ public final class BookingService {
     exec(c,"UPDATE bookings SET code=? WHERE id=?",Database.code(id,now),id);
     for(String seat:seats){
      exec(c,"UPDATE seats_state SET status='SOLD',held_by=NULL,hold_session=NULL,hold_until=NULL,booking_id=? WHERE show_id=? AND seat_label=?",id,show,seat);
-     exec(c,"INSERT INTO tickets(booking_id,show_id,seat_label,movie_title,room_name,starts_at,price_vnd) VALUES(?,?,?,?,?,?,?)",id,show,seat,info.get("title").getAsString(),info.get("room_name").getAsString(),info.get("starts_at").getAsLong(),price);
+     exec(c,"INSERT INTO tickets(booking_id,show_id,seat_label,movie_title,room_name,starts_at,price_vnd) VALUES(?,?,?,?,?,?,?)",id,show,seat,info.get("title").getAsString(),info.get("cinema_name").getAsString()+" / "+info.get("room_name").getAsString(),info.get("starts_at").getAsLong(),price);
     }
     releaseIn(c,"hold_session=? AND show_id=?",session.connectionId(),show);
     db.log(c,session.userId(),"CONFIRM_BOOKING","Vé "+Database.code(id,now)+" / "+total+" VND (demo)",now);
@@ -177,8 +173,9 @@ public final class BookingService {
   }
  }
  private JsonObject openShow(Connection c,long show)throws Exception {
-  JsonObject info=one(c,"SELECT s.*,m.title,r.name AS room_name,m.active AS movie_active,r.active AS room_active FROM showtimes s JOIN movies m ON m.id=s.movie_id JOIN rooms r ON r.id=s.room_id WHERE s.id=?",show);
-  require(info!=null && "OPEN".equals(Json.str(info,"status","")) && Json.num(info,"starts_at",0)>clock.millis() && Json.num(info,"movie_active",0)==1 && Json.num(info,"room_active",0)==1,"Suất chiếu không còn mở bán.");
+  JsonObject info=one(c,"SELECT s.*,m.title,m.release_date,m.end_date,r.name AS room_name,ci.name AS cinema_name,ci.active AS cinema_active,a.active AS area_active,m.active AS movie_active,r.active AS room_active FROM showtimes s JOIN movies m ON m.id=s.movie_id JOIN rooms r ON r.id=s.room_id JOIN cinemas ci ON ci.id=r.cinema_id JOIN areas a ON a.id=ci.area_id WHERE s.id=?",show);
+  require(info!=null && "OPEN".equals(Json.str(info,"status","")) && Json.num(info,"starts_at",0)>clock.millis() && Json.num(info,"movie_active",0)==1 && Json.num(info,"room_active",0)==1 && Json.num(info,"cinema_active",0)==1 && Json.num(info,"area_active",0)==1,"Suất chiếu không còn mở bán.");
+  CatalogService.checkShowDate(info,Json.num(info,"starts_at",0));
   return info;
  }
  private static int releaseIn(Connection c,String where,Object...args)throws Exception {

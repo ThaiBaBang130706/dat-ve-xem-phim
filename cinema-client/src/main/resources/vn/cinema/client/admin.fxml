@@ -3,7 +3,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.cinema.client.controller.AdminController">
- <left><VBox fx:id="navigation" spacing="7" prefWidth="205" styleClass="sidebar"><padding><Insets top="24" right="14" bottom="24" left="14"/></padding><Label text="QUẢN LÝ RẠP" styleClass="eyebrow"/><Separator/></VBox></left>
+ <left><ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefWidth="215"><content><VBox fx:id="navigation" spacing="7" prefWidth="205" styleClass="sidebar"><padding><Insets top="24" right="14" bottom="24" left="14"/></padding><Label text="QUẢN LÝ RẠP" styleClass="eyebrow"/><Separator/></VBox></content></ScrollPane></left>
  <center><VBox spacing="12"><padding><Insets top="20" right="24" bottom="8" left="24"/></padding>
   <HBox spacing="12"><Label fx:id="sectionLabel" text="Tổng quan" styleClass="section-title"/><Region HBox.hgrow="ALWAYS"/><Button text="Tải lại dữ liệu" onAction="#refresh"/><Button fx:id="dashboardButton" text="Dashboard web (tuỳ chọn) ↗" onAction="#openDashboard"/></HBox>
   <TabPane fx:id="tabs" VBox.vgrow="ALWAYS" styleClass="admin-tabs"/>

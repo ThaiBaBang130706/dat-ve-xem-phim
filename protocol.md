@@ -27,9 +27,12 @@ Lỗi nghiệp vụ giữ nguyên id/type, success=false, message tiếng Việt
 | GET_PROFILE | {} | User hiện tại |
 | UPDATE_PROFILE | {displayName} | User sau cập nhật |
 | CHANGE_PASSWORD | {oldPassword,newPassword} | {} |
-| GET_MOVIES | {} | Mảng phim đang hoạt động |
+| GET_MOVIES | {} | Mảng phim đang hoạt động, kèm genres, screening_status và screening_label |
 | GET_MOVIE_DETAIL | {movieId} | Một phim |
-| GET_SHOWTIMES | {movieId} hoặc {} | Suất đang bán, chưa bắt đầu |
+| GET_SHOWTIMES | {movieId?,areaId?,cinemaId?,date?:"yyyy-MM-dd"} | Suất đang bán, chưa bắt đầu, trong khoảng phát hành; kèm rạp/khu vực/địa chỉ |
+| GET_GENRES / GET_AREAS | {} | Thể loại / khu vực đang hoạt động |
+| GET_CINEMAS | {areaId?} | Rạp đang hoạt động cùng thông tin khu vực |
+| GET_IMAGE | {id:"SHA-256"} | {id,mime_type,data:"base64"}; yêu cầu đăng nhập |
 | GET_SEATMAP | {showId} | Snapshot, không tự subscribe |
 | SUBSCRIBE_SHOW | {showId} | Snapshot và nhận sự kiện |
 | UNSUBSCRIBE_SHOW | {} | {}; không tự trả ghế |
@@ -54,14 +57,21 @@ Tất cả kiểm tra role ADMIN và status ACTIVE tại Java server.
 | ADMIN_LIST_MOVIES / ADMIN_LIST_ROOMS / ADMIN_LIST_SHOWS | {} |
 | ADMIN_LIST_USERS / ADMIN_LIST_BOOKINGS / ADMIN_LIST_LOGS | {} |
 | ADMIN_LIST_TICKETS | {}; tối đa 1.000 vé ghế mới nhất, kèm mã đơn và khách hàng |
-| ADMIN_SAVE_MOVIE | {id:0,title,genre,duration_minutes,age_rating,description} |
+| ADMIN_SAVE_MOVIE | {id:0,title,genre_ids:[1,2],duration_minutes,age_rating,description,poster_url?,banner_url?,trailer_url?,release_date?,end_date?,director?,cast_names?,country?,language?,presentation?} |
 | ADMIN_DELETE_MOVIE | {id}; ngừng dùng, giữ lịch sử |
-| ADMIN_SAVE_ROOM | {id:0,name,rows_count,cols_count} |
+| ADMIN_SAVE_ROOM | {id:0,name,rows_count,cols_count,cinema_id} |
 | ADMIN_DELETE_ROOM | {id}; ngừng dùng, giữ lịch sử |
 | ADMIN_SAVE_SHOW | {id:0,movie_id,room_id,starts_at,price_vnd} |
 | ADMIN_DELETE_SHOW | {id}; chuyển CANCELLED |
+| ADMIN_LIST_GENRES / ADMIN_LIST_AREAS / ADMIN_LIST_CINEMAS | {} |
+| ADMIN_SAVE_GENRE / ADMIN_SAVE_AREA | {id:0,name} |
+| ADMIN_SAVE_CINEMA | {id:0,name,address,phone,area_id,image_url?} |
+| ADMIN_DELETE_GENRE / ADMIN_DELETE_AREA / ADMIN_DELETE_CINEMA | {id}; ngừng dùng nếu không còn mục con hoạt động |
+| ADMIN_UPLOAD_IMAGE | {data:"base64 PNG/JPEG"}; trả {url:"asset:SHA-256"}, ảnh tối đa 512 KB |
 | ADMIN_SET_USER_STATUS | {id,status:"ACTIVE"} hoặc LOCKED |
 | ADMIN_SET_SEAT_STATUS | {showId,seat:"B3",status:"UNAVAILABLE"} hoặc AVAILABLE |
+
+Ngày dùng chuỗi ISO `yyyy-MM-dd` hoặc chuỗi rỗng, tính theo giờ Việt Nam. Các trường phim mở rộng bị bỏ qua trong request được giữ nguyên khi sửa (client cũ vẫn gửi `genre` dạng chữ được). `genre_ids` chọn 1–10 thể loại. `poster_url`, `banner_url`, `image_url` nhận URL HTTP(S) hoặc `asset:SHA-256`; trailer chỉ nhận HTTP(S). Ảnh không được nhúng trong GET_MOVIES để giữ kích thước khung dưới 1 MiB.
 
 id=0 thêm mới, id có sẵn để sửa. Server tính ends_at từ thời lượng phim. Không sửa kích thước phòng khi đã có suất, không sửa suất có ghế HELD/SOLD, không huỷ suất có vé CONFIRMED. Không tự khoá admin đang dùng.
 

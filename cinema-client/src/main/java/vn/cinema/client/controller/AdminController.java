@@ -20,14 +20,15 @@ public final class AdminController {
  private final List<Button> navigationButtons=new ArrayList<>();
  @FXML private Button dashboardButton;
  private TcpClient client;
+ private CatalogForms catalogForms;
  private Runnable dashboard;
  private boolean disposed;
  private long refreshVersion;
  private final List<Dialog<?>> openDialogs=new ArrayList<>();
  private static final DateTimeFormatter DATE=DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
  public void init(TcpClient client,Runnable dashboard){
-  this.client=client;this.dashboard=dashboard;
-  String[] names={"Tổng quan","Phim","Phòng chiếu","Suất chiếu","Khách hàng","Đơn đặt vé","Vé theo ghế","Nhật ký"};
+  this.client=client;this.dashboard=dashboard;catalogForms=new CatalogForms(client,this::refresh,()->disposed,openDialogs);
+  String[] names={"Tổng quan","Phim","Phòng chiếu","Suất chiếu","Khách hàng","Đơn đặt vé","Vé theo ghế","Nhật ký","Thể loại","Khu vực","Rạp"};
   for(int i=0;i<names.length;i++){
    String name=names[i];int index=i;Tab tab=new Tab(name);tab.setClosable(false);tabs.getTabs().add(tab);
    Button button=Ui.button(name,()->tabs.getSelectionModel().select(index),"nav-button");button.setMaxWidth(Double.MAX_VALUE);navigation.getChildren().add(button);navigationButtons.add(button);
@@ -46,26 +47,26 @@ public final class AdminController {
   sectionLabel.setText(tabs.getTabs().get(index).getText());
   for(int i=0;i<navigationButtons.size();i++){Button b=navigationButtons.get(i);b.getStyleClass().remove("nav-active");if(i==index)b.getStyleClass().add("nav-active");}
   Tab tab=tabs.getTabs().get(index);VBox body=new VBox(12);body.getStyleClass().add("admin-body");tab.setContent(body);
-  String[] commands={"ADMIN_GET_STATS","ADMIN_LIST_MOVIES","ADMIN_LIST_ROOMS","ADMIN_LIST_SHOWS","ADMIN_LIST_USERS","ADMIN_LIST_BOOKINGS","ADMIN_LIST_TICKETS","ADMIN_LIST_LOGS"};
+  String[] commands={"ADMIN_GET_STATS","ADMIN_LIST_MOVIES","ADMIN_LIST_ROOMS","ADMIN_LIST_SHOWS","ADMIN_LIST_USERS","ADMIN_LIST_BOOKINGS","ADMIN_LIST_TICKETS","ADMIN_LIST_LOGS","ADMIN_LIST_GENRES","ADMIN_LIST_AREAS","ADMIN_LIST_CINEMAS"};
   request(client.request(commands[index],Json.obj()),value->{
    if(version!=refreshVersion)return;
    if(index==0){stats(body,value.getAsJsonObject());return;}
    String[][] columns={
-    {},{"id","Mã","title","Tên phim","genre","Thể loại","duration_minutes","Phút","age_rating","Tuổi","active","Hoạt động"},
-    {"id","Mã","name","Tên phòng","rows_count","Số hàng","cols_count","Ghế / hàng","active","Hoạt động"},
-    {"id","Mã","title","Phim","room_name","Phòng","starts_at","Bắt đầu","price_vnd","Giá vé","sold","Đã bán","status","Trạng thái"},
+    {},{"id","Mã","title","Tên phim","genre","Thể loại","duration_minutes","Phút","age_rating","Tuổi","release_date","Khởi chiếu","screening_label","Lịch phát hành","active","Hoạt động"},
+    {"id","Mã","name","Tên phòng","cinema_name","Rạp","rows_count","Số hàng","cols_count","Ghế / hàng","active","Hoạt động"},
+    {"id","Mã","title","Phim","cinema_name","Rạp","room_name","Phòng","starts_at","Bắt đầu","price_vnd","Giá vé","sold","Đã bán","status","Trạng thái"},
     {"id","Mã","username","Tên đăng nhập","display_name","Tên hiển thị","role","Quyền","status","Trạng thái"},
     {"id","Mã","code","Mã vé","username","Khách","title","Phim","seats","Ghế","total_vnd","Tổng tiền","status","Trạng thái"},
     {"id","Mã vé ghế","code","Mã đơn","username","Khách","movie_title","Phim","room_name","Phòng","starts_at","Giờ chiếu","seat_label","Ghế","price_vnd","Giá vé","ticket_state","Trạng thái"},
-    {"created_at","Thời gian","username","Tài khoản","action","Thao tác","detail","Chi tiết"}};
+    {"created_at","Thời gian","username","Tài khoản","action","Thao tác","detail","Chi tiết"},{"id","Mã","name","Thể loại","active","Hoạt động"},{"id","Mã","name","Tỉnh / thành phố","active","Hoạt động"},{"id","Mã","name","Tên rạp","area_name","Khu vực","address","Địa chỉ","phone","Điện thoại","active","Hoạt động"}};
    JsonArray records=value.getAsJsonArray();
    if(index==6)for(JsonElement e:records)e.getAsJsonObject().addProperty("ticket_state","ACTIVE".equals(Ui.string(e.getAsJsonObject(),"status"))?"Còn hiệu lực":"Đã huỷ");
    TableView<JsonObject> table=Ui.table(records,columns[index]);
    HBox actions=new HBox(10);
-   if(index>=1 && index<=3){
+   if(index>=1 && index<=3 || index>=8){
     actions.getChildren().add(Ui.button("Thêm mới",()->edit(index,null),"primary"));
     actions.getChildren().add(Ui.button("Sửa mục đã chọn",()->selected(table,row->edit(index,row)),null));
-    String[] remove={"","ADMIN_DELETE_MOVIE","ADMIN_DELETE_ROOM","ADMIN_DELETE_SHOW"};
+    String[] remove={"","ADMIN_DELETE_MOVIE","ADMIN_DELETE_ROOM","ADMIN_DELETE_SHOW","","","","","ADMIN_DELETE_GENRE","ADMIN_DELETE_AREA","ADMIN_DELETE_CINEMA"};
     actions.getChildren().add(Ui.button(index==3?"Huỷ suất chiếu":"Ngừng sử dụng",()->selected(table,row->{
      if(Ui.confirm(index==3?"Huỷ suất chiếu này?":"Ngừng sử dụng mục này? Dữ liệu lịch sử vẫn được giữ."))mutate(remove[index],Json.obj("id",Json.num(row,"id",0)));
     }),null));
@@ -99,30 +100,15 @@ public final class AdminController {
  private void selected(TableView<JsonObject> table,Consumer<JsonObject> action){JsonObject row=table.getSelectionModel().getSelectedItem();if(row==null)Ui.info("Chọn một dòng trong bảng.");else action.accept(row);}
  private void mutate(String command,JsonObject data){request(client.request(command,data),value->refresh());}
  private void edit(int index,JsonObject row){
-  if(index==3){showForm(row);return;}
-  LinkedHashMap<String,String> fields=new LinkedHashMap<>();
-  if(index==1){fields.put("title","Tên phim");fields.put("genre","Thể loại");fields.put("duration_minutes","Thời lượng (phút)");fields.put("age_rating","Phân loại: P / K / T13 / T16 / T18");fields.put("description","Nội dung phim");}
-  else{fields.put("name","Tên phòng");fields.put("rows_count","Số hàng (1–12)");fields.put("cols_count","Số ghế mỗi hàng (1–16)");}
-  Dialog<ButtonType> dialog=dialog(row==null?"Thêm mới":"Chỉnh sửa");
-  GridPane form=grid();Map<String,TextInputControl> controls=new LinkedHashMap<>();int i=0;
-  for(var entry:fields.entrySet()){
-   String value=row==null?"":Ui.string(row,entry.getKey());
-   if(row==null && entry.getKey().equals("age_rating"))value="P";
-   if(row==null && entry.getKey().equals("duration_minutes"))value="110";
-   TextInputControl input=entry.getKey().equals("description")?new TextArea(value):Ui.field(value,entry.getValue());
-   if(input instanceof TextArea area){area.setPrefRowCount(3);area.setWrapText(true);}
-   controls.put(entry.getKey(),input);form.addRow(i++,Ui.label(entry.getValue(),null),input);
+  switch(index){
+   case 1 -> catalogForms.movie(row);
+   case 2 -> catalogForms.room(row);
+   case 3 -> showForm(row);
+   case 8 -> catalogForms.lookup(row,true);
+   case 9 -> catalogForms.lookup(row,false);
+   case 10 -> catalogForms.cinema(row);
+   default -> {}
   }
-  dialog.getDialogPane().setContent(form);
-  wireSave(dialog,index==1?"ADMIN_SAVE_MOVIE":"ADMIN_SAVE_ROOM",()->{
-   JsonObject data=Json.obj("id",row==null?0:Json.num(row,"id",0));
-   controls.forEach((key,input)->{
-    if(Set.of("duration_minutes","rows_count","cols_count").contains(key))data.addProperty(key,Long.parseLong(input.getText().strip()));
-    else data.addProperty(key,input.getText());
-   });
-   return data;
-  });
-  dialog.showAndWait();
  }
  private void showForm(JsonObject row){
   var movies=client.request("ADMIN_LIST_MOVIES",Json.obj());
@@ -131,7 +117,7 @@ public final class AdminController {
    if(disposed)return;
    if(error!=null){Ui.error(Ui.message(error));return;}
    ComboBox<Choice> movie=choices(lists.get(0),"title",row==null?0:Json.num(row,"movie_id",0));
-   ComboBox<Choice> room=choices(lists.get(1),"name",row==null?0:Json.num(row,"room_id",0));
+   ComboBox<Choice> room=choices(lists.get(1),"room_label",row==null?0:Json.num(row,"room_id",0));
    TextField date=Ui.field(row==null?LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).plusDays(1).withHour(10).withMinute(0).format(DATE):Instant.ofEpochMilli(Json.num(row,"starts_at",0)).atZone(ZoneId.of("Asia/Ho_Chi_Minh")).format(DATE),"yyyy-MM-dd HH:mm");
    TextField price=Ui.field(row==null?"75000":Ui.string(row,"price_vnd"),"Giá vé VND");
    Dialog<ButtonType> dialog=dialog(row==null?"Thêm suất chiếu":"Sửa suất chiếu");GridPane form=grid();
@@ -207,7 +193,7 @@ public final class AdminController {
   }
   state.getSelectionModel().selectFirst();
   DatePicker day=new DatePicker();day.setPromptText(section==3 || section==6?"Ngày chiếu":"Ngày tạo");
-  day.setVisible(section>=3);day.setManaged(section>=3);
+  day.setVisible(section>=3 && section<=7);day.setManaged(section>=3 && section<=7);
   Label count=Ui.label("","muted");
   Runnable apply=()->{
    String query=search.getText().strip().toLowerCase(Locale.ROOT).replace("cinema-demo:","");

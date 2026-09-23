@@ -45,3 +45,7 @@ GitHub không tự cập nhật thư mục đã giải nén trên máy.
 Nếu thấy menu Phim đang chiếu và Vé của tôi khi đăng nhập admin, anh vẫn đang chạy bản client cũ. Kiểm tra working directory của cấu hình Maven có trỏ đúng thư mục vừa cập nhật không.
 
 Server đã có cửa sổ JavaFX vận hành trong module cinema-operator, cấu hình 02_Server_GUI. Xem [hướng dẫn IntelliJ](CHAY_INTELLIJ.md).
+
+## Danh mục phim và hệ thống rạp mở rộng
+
+Xem [hướng dẫn chi tiết](DANH_MUC_PHIM_RAP.md) để thêm khu vực, rạp, thể loại; tải poster/banner/ảnh rạp; nhập trailer, ngày phát hành và thông tin phim. Các mục này có sẵn trong thanh điều hướng bên trái và giữ nguyên dữ liệu lịch sử khi ngừng sử dụng.
