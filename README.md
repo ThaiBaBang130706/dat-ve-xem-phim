@@ -1,5 +1,7 @@
 # CinemaBooking — Hướng dẫn chạy và kiểm tra
 
+**Bản nâng cấp:** web đặt vé thật tại `http://localhost:8080`, trailer trên poster, lịch chiếu/giờ rạp, mã giảm giá, tích điểm và tích hợp QR payOS. Khởi động Java server rồi chạy `node cinema-web/server.mjs`. Xem [cấu hình chạy và thanh toán](docs/THANH_TOAN_VA_WEB.md).
+
 Đồ án **đặt vé xem phim đa người dùng qua TCP/IP trong LAN, mô hình Client–Server**. Tình huống chính: hai khách cùng giữ một ghế, server chỉ chấp nhận một người.
 
 **Cập nhật danh mục phim/rạp:** poster và banner thật, tải ảnh qua LAN, trailer, nhiều thể loại, ngày phát hành, thông tin phim và bộ lọc khu vực/rạp/ngày. [Hướng dẫn sử dụng](docs/DANH_MUC_PHIM_RAP.md).
@@ -14,7 +16,7 @@
 | Chạy đồ án đặt vé có server thật | IntelliJ: Server GUI + Client + Admin, theo mục 3 | TCP + SQLite; giao diện JavaFX NOIR |
 | Xem thống kê thật bằng trình duyệt | Java server + `cinema-dashboard`, mục 7 | Dashboard chỉ đọc, có đăng nhập admin |
 
-**Web VKU chưa nối backend Java.** Chuyển User/Admin/Server trên thanh demo không phải đăng nhập hoặc phân quyền thật. Chạy JavaFX không tự mở thiết kế web VKU. Node.js chỉ cần cho dashboard thống kê, không cần để chạy JavaFX hoặc mở bản web VKU.
+**File `cinema-web/index.html` là thiết kế mẫu cũ; web chạy bằng `server.mjs` đã nối backend Java qua TCP.** Chuyển User/Admin/Server trên thanh demo không phải đăng nhập hoặc phân quyền thật. Chạy JavaFX không tự mở thiết kế web VKU. Node.js chỉ cần cho dashboard thống kê, không cần để chạy JavaFX hoặc mở bản web VKU.
 
 ## 2. Cập nhật mã và mở đúng thư mục
 
@@ -224,4 +226,5 @@ GitHub Actions chạy Java 17/22, JavaFX trên màn hình ảo, kiểm thử tra
 
 [Giao thức](protocol.md) · [Kiến trúc](docs/KIEN_TRUC.md) · [Quản trị](docs/QUAN_TRI.md) · [Hướng dẫn IntelliJ](docs/CHAY_INTELLIJ.md) · [Kịch bản bảo vệ](docs/KICH_BAN_BAO_VE.md) · [Slide HTML](docs/slides.html)
 
-Một server / một SQLite, tối đa 64 kết nối TCP. Thanh toán và QR là demo; ảnh có thể dùng URL hoặc tải từ máy admin, poster minh hoạ được dùng làm dự phòng; chưa có cổng thanh toán thật, kiểm soát vé thương mại hoặc cụm dự phòng. Dữ liệu mẫu gồm phim hư cấu, phòng chiếu và lịch tương lai khi khởi tạo.
+Một server / một SQLite, tối đa 64 kết nối TCP. Thanh toán demo khi chưa cấu hình payOS; QR thật cần cấu hình kênh payOS trên server; ảnh có thể dùng URL hoặc tải từ máy admin, poster minh hoạ được dùng làm dự phòng; chưa có kiểm soát vé thương mại hoặc cụm dự phòng. Dữ liệu mẫu gồm phim hư cấu, phòng chiếu và lịch tương lai khi khởi tạo.
+

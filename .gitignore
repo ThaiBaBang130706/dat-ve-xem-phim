@@ -10,3 +10,8 @@ data/
 *.key
 *.log
 .DS_Store
+
+
+.env
+.env.*
+!.env.example

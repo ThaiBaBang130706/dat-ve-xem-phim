@@ -65,3 +65,14 @@ jobs:
           name: dashboard-dependency-lock
           path: cinema-dashboard/package-lock.json
 
+
+
+  live-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check cinema-web/live.js && node --test cinema-web/server.test.mjs

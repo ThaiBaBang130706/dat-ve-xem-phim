@@ -72,6 +72,9 @@ public final class BookingService {
   changed(show);return snapshot(session,show);
  }
  public JsonObject confirm(Session session,long show,List<String> requested,String requestId)throws Exception {
+  return confirm(session,show,requested,requestId,"");
+ }
+ public JsonObject confirm(Session session,long show,List<String> requested,String requestId,String coupon)throws Exception {
   List<String> seats=validSeats(requested);
   require(requestId!=null && requestId.length()>=8 && requestId.length()<=64,"Mã yêu cầu thanh toán không hợp lệ.");
   expire(show);
@@ -82,6 +85,7 @@ public final class BookingService {
     AuthService.check(c,session,false);
     JsonObject previous=one(c,"SELECT * FROM bookings WHERE user_id=? AND request_id=?",session.userId(),requestId);
     if(previous!=null){
+     require(Commerce.code(coupon).equals(Json.str(previous,"promotion_code","")),"Mã thanh toán đã dùng với mã giảm giá khác.");
      require(previous.get("show_id").getAsLong()==show,"Mã thanh toán đã dùng cho suất chiếu khác.");
      JsonArray oldSeats=rows(c,"SELECT seat_label FROM tickets WHERE booking_id=?",previous.get("id").getAsLong());
      Set<String> expected=new HashSet<>();oldSeats.forEach(e->expected.add(e.getAsJsonObject().get("seat_label").getAsString()));
@@ -94,12 +98,15 @@ public final class BookingService {
      JsonObject state=one(c,"SELECT * FROM seats_state WHERE show_id=? AND seat_label=?",show,seat);
      require(state!=null && "HELD".equals(Json.str(state,"status","")) && session.connectionId().equals(Json.str(state,"hold_session","")) && Json.num(state,"hold_until",0)>now,"Ghế "+seat+" không còn được giữ bởi phiên của bạn.");
     }
-    long price=info.get("price_vnd").getAsLong(), total=price*seats.size();
+    long price=info.get("price_vnd").getAsLong();
+    JsonObject quote=Commerce.quote(c,session.userId(),price*seats.size(),coupon,now);long total=Json.num(quote,"total",0);
     long id=insert(c,"INSERT INTO bookings(user_id,show_id,request_id,total_vnd,status,payment_method,created_at) VALUES(?,?,?,?,'CONFIRMED','DEMO',?)",session.userId(),show,requestId,total,now);
-    exec(c,"UPDATE bookings SET code=? WHERE id=?",Database.code(id,now),id);
+    exec(c,"UPDATE bookings SET code=?,discount_vnd=?,promotion_code=? WHERE id=?",Database.code(id,now),Json.num(quote,"discount",0),Json.str(quote,"promotionCode",""),id);
+    Commerce.award(c,session.userId(),id,total,now);
+    int seatIndex=0;
     for(String seat:seats){
      exec(c,"UPDATE seats_state SET status='SOLD',held_by=NULL,hold_session=NULL,hold_until=NULL,booking_id=? WHERE show_id=? AND seat_label=?",id,show,seat);
-     exec(c,"INSERT INTO tickets(booking_id,show_id,seat_label,movie_title,room_name,starts_at,price_vnd) VALUES(?,?,?,?,?,?,?)",id,show,seat,info.get("title").getAsString(),info.get("cinema_name").getAsString()+" / "+info.get("room_name").getAsString(),info.get("starts_at").getAsLong(),price);
+     exec(c,"INSERT INTO tickets(booking_id,show_id,seat_label,movie_title,room_name,starts_at,price_vnd) VALUES(?,?,?,?,?,?,?)",id,show,seat,info.get("title").getAsString(),info.get("cinema_name").getAsString()+" / "+info.get("room_name").getAsString(),info.get("starts_at").getAsLong(),total/seats.size()+(seatIndex++<total%seats.size()?1:0));
     }
     releaseIn(c,"hold_session=? AND show_id=?",session.connectionId(),show);
     db.log(c,session.userId(),"CONFIRM_BOOKING","Vé "+Database.code(id,now)+" / "+total+" VND (demo)",now);
@@ -108,6 +115,10 @@ public final class BookingService {
    bump(show);
   }finally{l.unlock();}
   changed(show);return result;
+ }
+ public JsonObject quote(Session session,long show,List<String> requested,String coupon)throws Exception {
+  List<String> seats=validSeats(requested);
+  return db.read(c->{AuthService.check(c,session,false);JsonObject info=openShow(c,show);return Commerce.quote(c,session.userId(),Json.num(info,"price_vnd",0)*seats.size(),coupon,clock.millis());});
  }
  public JsonArray myBookings(Session session)throws Exception {
   return db.read(c->{AuthService.check(c,session,false);return rows(c,"SELECT b.*,m.title,r.name AS room_name,s.starts_at,(SELECT group_concat(t.seat_label, ', ') FROM tickets t WHERE t.booking_id=b.id) AS seats FROM bookings b JOIN showtimes s ON s.id=b.show_id JOIN movies m ON m.id=s.movie_id JOIN rooms r ON r.id=s.room_id WHERE b.user_id=? ORDER BY b.id DESC LIMIT 500",session.userId());});
@@ -128,9 +139,11 @@ public final class BookingService {
     JsonObject user=AuthService.check(c,session,false),b=booking(c,id);
     require(b.get("user_id").getAsLong()==session.userId() || "ADMIN".equals(Json.str(user,"role","")),"Bạn không có quyền huỷ vé này.");
     if("CANCELLED".equals(Json.str(b,"status","")))return b;
+    require("DEMO".equals(Json.str(b,"payment_method","")),"Vé đã thanh toán thật: liên hệ rạp để xử lý hoàn tiền; không tự động huỷ.");
     require(Json.num(b,"starts_at",0)>clock.millis(),"Suất chiếu đã bắt đầu, không thể huỷ vé.");
     exec(c,"UPDATE tickets SET status='CANCELLED' WHERE booking_id=?",id);
     exec(c,"UPDATE bookings SET status='CANCELLED' WHERE id=?",id);
+    Commerce.reverse(c,id,clock.millis());
     exec(c,"UPDATE seats_state SET status='AVAILABLE',booking_id=NULL WHERE booking_id=?",id);
     db.log(c,session.userId(),"CANCEL_BOOKING","Huỷ vé "+Json.str(b,"code","")+" (demo)",clock.millis());
     return booking(c,id);
@@ -172,7 +185,7 @@ public final class BookingService {
    for(JsonElement owner:owners)events.holdExpired(owner.getAsJsonObject().get("hold_session").getAsString(),show);
   }
  }
- private JsonObject openShow(Connection c,long show)throws Exception {
+ JsonObject openShow(Connection c,long show)throws Exception {
   JsonObject info=one(c,"SELECT s.*,m.title,m.release_date,m.end_date,r.name AS room_name,ci.name AS cinema_name,ci.active AS cinema_active,a.active AS area_active,m.active AS movie_active,r.active AS room_active FROM showtimes s JOIN movies m ON m.id=s.movie_id JOIN rooms r ON r.id=s.room_id JOIN cinemas ci ON ci.id=r.cinema_id JOIN areas a ON a.id=ci.area_id WHERE s.id=?",show);
   require(info!=null && "OPEN".equals(Json.str(info,"status","")) && Json.num(info,"starts_at",0)>clock.millis() && Json.num(info,"movie_active",0)==1 && Json.num(info,"room_active",0)==1 && Json.num(info,"cinema_active",0)==1 && Json.num(info,"area_active",0)==1,"Suất chiếu không còn mở bán.");
   CatalogService.checkShowDate(info,Json.num(info,"starts_at",0));
@@ -181,7 +194,7 @@ public final class BookingService {
  private static int releaseIn(Connection c,String where,Object...args)throws Exception {
   return exec(c,"UPDATE seats_state SET status='AVAILABLE',held_by=NULL,hold_session=NULL,hold_until=NULL WHERE status='HELD' AND "+where,args);
  }
- private static List<String> validSeats(List<String> seats) {
+ static List<String> validSeats(List<String> seats) {
   require(seats!=null && !seats.isEmpty() && seats.size()<=8,"Mỗi lần đặt từ 1 đến 8 ghế.");
   require(new HashSet<>(seats).size()==seats.size(),"Danh sách ghế bị trùng.");
   for(String s:seats)require(s!=null && s.matches("[A-L]([1-9]|1[0-6])"),"Mã ghế không hợp lệ.");
@@ -195,3 +208,4 @@ public final class BookingService {
   return b;
  }
 }
+

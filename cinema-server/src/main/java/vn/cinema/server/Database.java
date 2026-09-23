@@ -16,8 +16,9 @@ public final class Database {
    String schema=new String(Objects.requireNonNull(getClass().getResourceAsStream("/schema.sql")).readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);
    for(String sql:schema.split(";"))if(!sql.isBlank())s.execute(sql);
    CatalogMigration.migrate(c);
+   Commerce.migrate(c);
    // A previous process cannot retain ownership of a hold.
-   s.executeUpdate("UPDATE seats_state SET status='AVAILABLE',held_by=NULL,hold_session=NULL,hold_until=NULL WHERE status='HELD'");
+   s.executeUpdate("UPDATE seats_state SET status='AVAILABLE',held_by=NULL,hold_session=NULL,hold_until=NULL WHERE status='HELD' AND hold_session NOT LIKE 'payment:%'");
   }
  }
  public Connection open() throws SQLException {
@@ -106,3 +107,4 @@ public final class Database {
   return "CB-"+date+"-"+String.format("%04d",id);
  }
 }
+

@@ -65,7 +65,8 @@ final class CatalogForms {
   fetch("ADMIN_LIST_AREAS",areas->{
    Form form=new Form(value==null?"Thêm rạp":"Chỉnh sửa rạp");ComboBox<Choice> area=choices(areas,"name",Json.num(row,"area_id",0));form.add("Tỉnh / thành phố",area);
    TextField name=form.text("Tên rạp",row,"name",""),address=form.text("Địa chỉ",row,"address",""),phone=form.text("Số điện thoại",row,"phone",""),image=form.image("Ảnh rạp",row,"image_url");
-   form.show("ADMIN_SAVE_CINEMA",()->Json.obj("id",Json.num(row,"id",0),"area_id",required(area,"khu vực"),"name",name.getText(),"address",address.getText(),"phone",phone.getText(),"image_url",image.getText()));
+   TextField opens=form.text("Giờ mở cửa (HH:mm)",row,"opens_at","08:00"),closes=form.text("Giờ đóng cửa (HH:mm)",row,"closes_at","23:59");
+   form.show("ADMIN_SAVE_CINEMA",()->Json.obj("id",Json.num(row,"id",0),"area_id",required(area,"khu vực"),"name",name.getText(),"address",address.getText(),"phone",phone.getText(),"image_url",image.getText(),"opens_at",opens.getText(),"closes_at",closes.getText()));
   });
  }
  void lookup(JsonObject value,boolean genre){
@@ -107,3 +108,4 @@ final class CatalogForms {
   }
  }
 }
+

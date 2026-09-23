@@ -27,7 +27,7 @@ public final class MainController {
  private long view,currentShow,lastRevision=-1,serverOffset,holdUntil;
  private JsonObject currentMap;
  private final Set<String> selected=new LinkedHashSet<>(),mine=new LinkedHashSet<>();
- private String paymentId;
+ private String paymentId;private TextField couponField;private boolean realPayment;
  private GridPane seatGrid;private Label selectionLabel,countdownLabel;private Button holdButton,payButton,releaseButton;
  private Timeline ticker;
  public void init(CinemaApp app,TcpClient client,JsonObject user){
@@ -36,6 +36,7 @@ public final class MainController {
   client.onEvent(event->Ui.run(()->event(event)));
   client.onDisconnect(message->Ui.run(()->{if(!disposed){disposed=true;Ui.error(message);app.showLogin();}}));
   ticker=new Timeline(new KeyFrame(Duration.seconds(1),e->countdown()));ticker.setCycleCount(Animation.INDEFINITE);ticker.play();
+  client.request("GET_PAYMENT_CONFIG",Json.obj()).thenAccept(v->Ui.run(()->realPayment=v.getAsJsonObject().get("enabled").getAsBoolean()));
   home();
  }
  public void dispose(){disposed=true;if(ticker!=null)ticker.stop();}
@@ -92,7 +93,9 @@ public final class MainController {
     for(JsonElement e:movies){JsonObject movie=e.getAsJsonObject();String title=Ui.string(movie,"title"),genre=Ui.string(movie,"genre");
      if(!(title+" "+genre+" "+Ui.string(movie,"cast_names")).toLowerCase(Locale.ROOT).contains(term) || genres.getSelectionModel().getSelectedIndex()>0&&!genreNames(movie).contains(genres.getValue()) || status.getSelectionModel().getSelectedIndex()>0&&!status.getValue().equals(Ui.string(movie,"screening_label")))continue;
      Label name=Ui.label(title,"section-title");name.setMinHeight(48);name.setMaxHeight(72);
-     VBox card=new VBox(10,images.movie(movie,false,200,300),name,Ui.label(Ui.string(movie,"screening_label"),"eyebrow"),Ui.label(genre+" · "+Ui.string(movie,"duration_minutes")+" phút","muted"),Ui.label("Phân loại: "+Ui.string(movie,"age_rating"),"muted"),Ui.button("Xem lịch chiếu",()->detail(movie),"primary"));
+     StackPane poster=new StackPane(images.movie(movie,false,200,300));
+     Button play=Ui.button("▶ Trailer",()->MediaImages.trailer(app,Ui.string(movie,"trailer_url")),"primary");play.setDisable(Ui.string(movie,"trailer_url").isBlank());StackPane.setAlignment(play,Pos.BOTTOM_CENTER);poster.getChildren().add(play);
+     VBox card=new VBox(10,poster,name,Ui.label(Ui.string(movie,"release_label"),"muted"),Ui.label(Ui.string(movie,"screening_label"),"eyebrow"),Ui.label(genre+" · "+Ui.string(movie,"duration_minutes")+" phút","muted"),Ui.label("Phân loại: "+Ui.string(movie,"age_rating"),"muted"),Ui.button("Xem lịch chiếu",()->detail(movie),"primary"));
      card.getStyleClass().add("movie-card");card.setPrefWidth(200);card.setMaxWidth(200);cards.getChildren().add(card);
     }
     if(cards.getChildren().isEmpty())cards.getChildren().add(Ui.label("Chưa có phim phù hợp. Thử từ khoá, thể loại hoặc trạng thái khác.","muted"));
@@ -113,7 +116,7 @@ public final class MainController {
   VBox copy=new VBox(9,Ui.label(Ui.string(movie,"screening_label"),"eyebrow"),Ui.label(Ui.string(movie,"description"),null));copy.setMinWidth(250);HBox.setHgrow(copy,Priority.ALWAYS);
   String[][] details={{"Đạo diễn","director"},{"Diễn viên","cast_names"},{"Quốc gia","country"},{"Ngôn ngữ","language"},{"Phiên bản","presentation"},{"Khởi chiếu","release_date"},{"Ngừng chiếu","end_date"}};
   for(String[] field:details)if(!Ui.string(movie,field[1]).isBlank())copy.getChildren().add(Ui.label(field[0]+": "+Ui.string(movie,field[1]),"muted"));
-  Button trailer=Ui.button("Xem trailer",()->MediaImages.trailer(app,Ui.string(movie,"trailer_url")),"primary");trailer.setId("trailerButton");trailer.setDisable(Ui.string(movie,"trailer_url").isBlank());trailer.setTooltip(new Tooltip(trailer.isDisabled()?"Phim chưa có trailer":"Mở trailer trong trình duyệt"));copy.getChildren().add(trailer);
+  Button trailer=Ui.button("Xem trailer",()->MediaImages.trailer(app,Ui.string(movie,"trailer_url")),"primary");trailer.setId("trailerButton");trailer.setDisable(Ui.string(movie,"trailer_url").isBlank());trailer.setTooltip(new Tooltip(trailer.isDisabled()?"Phim chưa có trailer":"Mở trailer trong trình duyệt"));copy.getChildren().addAll(trailer,Ui.label(Ui.string(movie,"release_label"),"muted"));
   body.getChildren().addAll(new HBox(20,images.movie(movie,false,150,225),copy),Ui.label("Chọn rạp & suất chiếu","section-title"));
   ComboBox<Place> area=new ComboBox<>(),cinema=new ComboBox<>();area.setId("areaFilter");cinema.setId("cinemaFilter");area.setPrefWidth(170);cinema.setPrefWidth(230);
   DatePicker day=new DatePicker();day.setEditable(false);day.setPromptText("Tất cả ngày chiếu");day.setId("showDateFilter");day.setPrefWidth(170);
@@ -126,7 +129,7 @@ public final class MainController {
     shows.getChildren().clear();long areaId=area.getValue()==null?0:area.getValue().id(),cinemaId=cinema.getValue()==null?0:cinema.getValue().id();
     for(JsonElement e:schedules){JsonObject show=e.getAsJsonObject();
      if(areaId>0 && areaId!=Json.num(show,"area_id",0) || cinemaId>0 && cinemaId!=Json.num(show,"cinema_id",0) || day.getValue()!=null && !day.getValue().equals(Instant.ofEpochMilli(Json.num(show,"starts_at",0)).atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate()))continue;
-     VBox info=new VBox(6,Ui.label(Ui.string(show,"cinema_name")+" · "+Ui.string(show,"area_name"),"section-title"),Ui.label(Ui.string(show,"address")+" · "+Ui.string(show,"phone"),"muted"),Ui.label(Ui.date(Json.num(show,"starts_at",0))+" / "+Ui.string(show,"room_name"),null));HBox.setHgrow(info,Priority.ALWAYS);
+     VBox info=new VBox(6,Ui.label(Ui.string(show,"cinema_name")+" · "+Ui.string(show,"area_name"),"section-title"),Ui.label(Ui.string(show,"address")+" · "+Ui.string(show,"phone")+" · Mở cửa "+Ui.string(show,"opens_at")+"–"+Ui.string(show,"closes_at"),"muted"),Ui.label(Ui.date(Json.num(show,"starts_at",0))+" / "+Ui.string(show,"room_name"),null));HBox.setHgrow(info,Priority.ALWAYS);
      HBox row=new HBox(14,info,new VBox(10,Ui.label(Ui.money(Json.num(show,"price_vnd",0)),null),Ui.button("Chọn ghế",()->seats(show),"primary")));row.setAlignment(Pos.CENTER_LEFT);row.getStyleClass().add("card");
      if(!Ui.string(show,"cinema_image_url").isBlank())row.getChildren().add(0,images.view(Ui.string(show,"cinema_image_url"),Json.num(show,"cinema_id",0),Ui.string(show,"cinema_name"),110,75));shows.getChildren().add(row);
     }
@@ -145,9 +148,10 @@ public final class MainController {
   legend.getChildren().addAll(Ui.label("● Trống","legend-available"),Ui.label("● Người khác giữ","legend-held"),Ui.label("● Bạn đang giữ","legend-mine"),Ui.label("● Đã bán","legend-sold"),Ui.label("● Tạm khoá","muted"));
   selectionLabel=Ui.label("Chọn tối đa 8 ghế.","section-title");countdownLabel=Ui.label("Ghế chỉ được giữ sau khi bấm Giữ ghế.","muted");
   holdButton=Ui.button("Giữ ghế · 5 phút",this::hold,"primary");
-  payButton=Ui.button("Thanh toán mô phỏng",this::pay,"primary");
+  payButton=Ui.button(realPayment?"Thanh toán QR payOS":"Thanh toán mô phỏng",this::pay,"primary");
+  couponField=Ui.field("","Mã giảm giá (nếu có)");
   releaseButton=Ui.button("Bỏ giữ ghế",this::release,null);
-  content.getChildren().addAll(screen,scroll,legend,selectionLabel,countdownLabel,new HBox(10,holdButton,payButton,releaseButton),Ui.label("Thanh toán demo không thu tiền. Giá vé được tính tại server.","muted"));
+  content.getChildren().addAll(screen,scroll,legend,selectionLabel,countdownLabel,couponField,new HBox(10,holdButton,payButton,releaseButton),Ui.label(realPayment?"QR thật · Vé chỉ phát hành khi server xác nhận đã nhận tiền.":"Thanh toán demo không thu tiền. Giá và giảm giá được tính tại server.","muted"));
   load("SUBSCRIBE_SHOW",Json.obj("showId",currentShow),value->applyMap(value.getAsJsonObject()));
   countdown();
  }
@@ -205,15 +209,35 @@ public final class MainController {
  }
  private void release(){transaction("RELEASE_SEATS",Json.obj("showId",currentShow),value->{selected.clear();paymentId=null;applyMap(value.getAsJsonObject());});}
  private void pay(){
-  if(!Ui.confirm("Xác nhận thanh toán mô phỏng cho ghế "+String.join(", ",mine)+"?\nKhông có giao dịch tiền thật."))return;
   if(paymentId==null)paymentId=UUID.randomUUID().toString();
-  transaction("CONFIRM_BOOKING",Json.obj("showId",currentShow,"seats",mine,"requestId",paymentId),value->{
-   JsonObject booking=value.getAsJsonObject();paymentId=null;ticketDialog(booking);tickets();
+  JsonObject data=Json.obj("showId",currentShow,"seats",mine,"requestId",paymentId,"coupon",couponField.getText());
+  transaction("QUOTE_BOOKING",data,quote->{
+   renderSeats();JsonObject q=quote.getAsJsonObject();
+   if(!Ui.confirm("Tổng tiền: "+Ui.money(Json.num(q,"total",0))+"\nGiảm: "+Ui.money(Json.num(q,"discount",0))+" · Cộng "+Json.num(q,"pointsEarned",0)+" điểm\n"+(realPayment?"Tạo QR thanh toán thật?":"Xác nhận mô phỏng (không thu tiền)?")))return;
+   transaction(realPayment?"CREATE_PAYMENT":"CONFIRM_BOOKING",data,value->{
+    paymentId=null;
+    if(realPayment){paymentDialog(value.getAsJsonObject());payments();}
+    else{ticketDialog(value.getAsJsonObject());tickets();}
+   });
   });
+ }
+ private void paymentDialog(JsonObject payment){
+  Dialog<Void> dialog=Ui.themed(new Dialog<>());dialog.setTitle("QR payOS · "+Ui.money(Json.num(payment,"amount",0)));dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+  VBox box=new VBox(12);box.setPadding(new Insets(20));Label status=Ui.label(Ui.string(payment,"status"),"section-title");box.getChildren().add(status);
+  String qr=Ui.string(payment,"qrCode");
+  if(!qr.isBlank())try{BitMatrix matrix=new MultiFormatWriter().encode(qr,BarcodeFormat.QR_CODE,260,260);WritableImage image=new WritableImage(260,260);for(int y=0;y<260;y++)for(int x=0;x<260;x++)image.getPixelWriter().setColor(x,y,matrix.get(x,y)?Color.BLACK:Color.WHITE);box.getChildren().add(new ImageView(image));}catch(WriterException ignored){}
+  String url=Ui.string(payment,"checkoutUrl");
+  if(url.startsWith("https://pay.payos.vn/"))box.getChildren().add(Ui.button("Mở trang thanh toán payOS",()->app.getHostServices().showDocument(url),"primary"));
+  box.getChildren().addAll(Ui.label("Hạn thanh toán: "+Ui.date(Json.num(payment,"expires_at",0))+"\nServer tự kiểm tra giao dịch. Không chuyển tiền sau hạn này.","muted"),Ui.button("Kiểm tra trạng thái",()->Ui.async(client.request("GET_PAYMENT",Json.obj("paymentId",Json.num(payment,"id",0))),v->status.setText(Ui.string(v.getAsJsonObject(),"status"))),null));
+  dialog.getDialogPane().setContent(box);dialog.showAndWait();
+ }
+ private void payments(){
+  if(busy)return;leaveShow();pageTitle.setText("Thanh toán của tôi");notice.setText("PAID: đã xuất vé · REVIEW: cần liên hệ rạp đối soát/hoàn tiền.");
+  load("GET_MY_PAYMENTS",Json.obj(),value->{TableView<JsonObject> table=Ui.table(value.getAsJsonArray(),"id","Mã giao dịch","amount","Số tiền","status","Trạng thái","expires_at","Hết hạn");content.getChildren().addAll(Ui.button("Tải lại",this::payments,null),table,Ui.button("Xem QR / kiểm tra",()->{JsonObject row=table.getSelectionModel().getSelectedItem();if(row!=null)load("GET_PAYMENT",Json.obj("paymentId",Json.num(row,"id",0)),v->paymentDialog(v.getAsJsonObject()));},"primary"));});
  }
  @FXML public void tickets(){
   if(busy){Ui.info("Đợi yêu cầu đặt vé hiện tại hoàn tất.");return;}
-  leaveShow();pageTitle.setText("Vé của tôi");notice.setText("Có thể huỷ vé trước giờ chiếu. Mã QR dùng trong bản demo.");
+  leaveShow();content.getChildren().add(Ui.button("Thanh toán QR đang chờ / lịch sử",this::payments,null));pageTitle.setText("Vé của tôi");notice.setText("Có thể huỷ vé trước giờ chiếu. Mã QR dùng trong bản demo.");
   load("GET_MY_TICKETS",Json.obj(),value->{
    TableView<JsonObject> table=Ui.table(value.getAsJsonArray(),"code","Mã vé","title","Phim","room_name","Phòng","starts_at","Giờ chiếu","seats","Ghế","total_vnd","Tổng tiền","status","Trạng thái");
    Button show=Ui.button("Xem vé / QR",()->{
@@ -244,6 +268,7 @@ public final class MainController {
  }
  @FXML public void account(){
   if(busy)return;leaveShow();pageTitle.setText("Tài khoản");notice.setText("Cập nhật tên hiển thị và mật khẩu.");
+  load("GET_LOYALTY",Json.obj(),v->{JsonObject l=v.getAsJsonObject();content.getChildren().addAll(Ui.label("Điểm tích luỹ: "+Json.num(l,"points",0)+" · Mỗi 10.000đ = 1 điểm","section-title"),Ui.table(l.getAsJsonArray("history"),"code","Mã vé","points","Điểm","reason","Nội dung","created_at","Thời gian"));});
   load("GET_PROFILE",Json.obj(),value->{
    user=value.getAsJsonObject();TextField name=Ui.field(Ui.string(user,"display_name"),"Tên hiển thị");
    PasswordField old=new PasswordField(),next=new PasswordField();old.setPromptText("Mật khẩu hiện tại");next.setPromptText("Mật khẩu mới (ít nhất 8 ký tự)");
@@ -257,4 +282,5 @@ public final class MainController {
   client.request("LOGOUT",Json.obj()).whenComplete((v,e)->Ui.run(()->{dispose();app.showLogin();}));
  }
 }
+
 

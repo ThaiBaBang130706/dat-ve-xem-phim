@@ -14,6 +14,8 @@ import static vn.cinema.server.Validation.*;
 public final class TcpServer implements AutoCloseable,BookingService.Events {
  private static final Logger LOG=LoggerFactory.getLogger(TcpServer.class);
  private final AuthService auth;
+ private final Commerce commerce;private final PaymentService payments;
+ private final ScheduledExecutorService paymentWorker=Executors.newSingleThreadScheduledExecutor(r->daemon(r,"payment-reconcile"));
  private final BookingService booking;
  private final AdminService admin;
  private final CatalogService catalog;private final MediaService media;
@@ -35,6 +37,7 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
  }
  public TcpServer(Database db,Clock clock,int port)throws IOException {
   auth=new AuthService(db,clock);booking=new BookingService(db,clock);admin=new AdminService(db,clock,booking);catalog=new CatalogService(db,clock);media=new MediaService(db,clock);
+  commerce=new Commerce(db,clock);payments=new PaymentService(db,clock,booking);
   booking.setEvents(this);
   listener=new ServerSocket();listener.setReuseAddress(true);listener.bind(new InetSocketAddress("0.0.0.0",port),64);
  }
@@ -45,6 +48,7 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
  public int clientCount(){return clients.size();}
  public void start(){
   daemon(this::accept,"cinema-accept").start();
+  paymentWorker.scheduleWithFixedDelay(payments::poll,10,15,TimeUnit.SECONDS);
   scheduler.scheduleAtFixedRate(()->{
    try{booking.expireAll();}catch(Exception e){LOG.error("Không thể dọn ghế hết hạn",e);}
    long now=System.currentTimeMillis();
@@ -72,7 +76,7 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
  @Override public void close(){
   running=false;
   try{listener.close();}catch(IOException ignored){}
-  scheduler.shutdownNow();
+  scheduler.shutdownNow();paymentWorker.shutdownNow();
   for(Client c:List.copyOf(clients))c.close();
  }
  private static Thread daemon(Runnable task,String name){Thread t=new Thread(task,name);t.setDaemon(true);return t;}
@@ -146,6 +150,7 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
    }
    require(session!=null && token!=null && token.equals(request.token()),"Vui lòng đăng nhập lại.");
    auth.profile(session);
+   if(type.equals("ADMIN_LIST_PAYMENTS"))return payments.list(session,true);
    if(type.startsWith("ADMIN_")){
     JsonElement result=admin.handle(session,type,d);
     if(type.startsWith("ADMIN_SAVE_") || type.startsWith("ADMIN_DELETE_"))showUpdated();
@@ -153,6 +158,13 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
    }
    return switch(type){
     case "LOGOUT" -> {booking.disconnect(session);session=null;token=null;subscribedShow=0;username="Chưa đăng nhập";role="—";yield Json.obj();}
+    case "GET_LOYALTY" -> commerce.loyalty(session);
+    case "GET_PROMOTIONS" -> commerce.promotions(false);
+    case "GET_PAYMENT_CONFIG" -> Json.obj("enabled",payments.enabled(),"provider","PAYOS","demoEnabled",!payments.enabled());
+    case "QUOTE_BOOKING" -> booking.quote(session,number(d,"showId",1,Long.MAX_VALUE),seatList(d),Json.str(d,"coupon",""));
+    case "CREATE_PAYMENT" -> payments.create(session,number(d,"showId",1,Long.MAX_VALUE),seatList(d),text(d,"requestId",8,64),Json.str(d,"coupon",""));
+    case "GET_PAYMENT" -> payments.status(session,number(d,"paymentId",1,Long.MAX_VALUE));
+    case "GET_MY_PAYMENTS" -> payments.list(session,false);
     case "GET_PROFILE" -> auth.profile(session);
     case "UPDATE_PROFILE" -> auth.update(session,d);
     case "CHANGE_PASSWORD" -> auth.changePassword(session,d);
@@ -178,7 +190,7 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
     case "UNSUBSCRIBE_SHOW" -> {subscribedShow=0;yield Json.obj();}
     case "HOLD_SEATS" -> booking.hold(session,number(d,"showId",1,Long.MAX_VALUE),seatList(d));
     case "RELEASE_SEATS" -> booking.release(session,number(d,"showId",1,Long.MAX_VALUE));
-    case "CONFIRM_BOOKING" -> booking.confirm(session,number(d,"showId",1,Long.MAX_VALUE),seatList(d),Validation.text(d,"requestId",8,64));
+    case "CONFIRM_BOOKING" -> {require(!payments.enabled(),"Chế độ thanh toán thật đang bật. Hãy thanh toán qua QR.");yield booking.confirm(session,number(d,"showId",1,Long.MAX_VALUE),seatList(d),Validation.text(d,"requestId",8,64),Json.str(d,"coupon",""));}
     case "GET_MY_TICKETS" -> booking.myBookings(session);
     case "GET_TICKET" -> booking.ticket(session,number(d,"bookingId",1,Long.MAX_VALUE));
     case "CANCEL_BOOKING" -> booking.cancel(session,number(d,"bookingId",1,Long.MAX_VALUE));
@@ -205,4 +217,5 @@ public final class TcpServer implements AutoCloseable,BookingService.Events {
   }
  }
 }
+
 

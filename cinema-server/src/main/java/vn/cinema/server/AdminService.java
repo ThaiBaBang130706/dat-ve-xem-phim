@@ -16,6 +16,8 @@ public final class AdminService {
  public JsonElement handle(Session session,String type,JsonObject data)throws Exception {
   db.read(c->AuthService.check(c,session,true));
   return switch(type){
+   case "ADMIN_LIST_PROMOTIONS" -> new Commerce(db,clock).promotions(true);
+   case "ADMIN_SAVE_PROMOTION" -> new Commerce(db,clock).save(session,data);
    case "ADMIN_GET_STATS" -> stats();
    case "ADMIN_LIST_MOVIES" -> catalog.movies(true);
    case "ADMIN_LIST_ROOMS" -> catalog.rooms();
@@ -108,6 +110,7 @@ public final class AdminService {
    CatalogService.checkShowDate(m,start);
    require(one(c,"SELECT ci.id FROM cinemas ci JOIN areas a ON a.id=ci.area_id WHERE ci.id=? AND ci.active=1 AND a.active=1",Json.num(r,"cinema_id",1))!=null,"Rạp hoặc khu vực không còn hoạt động.");
    long end=start+Json.num(m,"duration_minutes",0)*60_000;
+   CatalogService.checkHours(one(c,"SELECT * FROM cinemas WHERE id=?",Json.num(r,"cinema_id",1)),start,end);
    require(one(c,"SELECT id FROM showtimes WHERE room_id=? AND id<>? AND status='OPEN' AND starts_at<? AND ends_at>?",room,id,end+900_000,start-900_000)==null,"Lịch chiếu bị trùng; cần 15 phút dọn phòng giữa hai suất.");
    long saved=id;
    if(id>0){
@@ -159,3 +162,4 @@ public final class AdminService {
   booking.publish(show);return Json.obj();
  }
 }
+

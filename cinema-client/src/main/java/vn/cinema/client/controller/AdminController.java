@@ -28,7 +28,7 @@ public final class AdminController {
  private static final DateTimeFormatter DATE=DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
  public void init(TcpClient client,Runnable dashboard){
   this.client=client;this.dashboard=dashboard;catalogForms=new CatalogForms(client,this::refresh,()->disposed,openDialogs);
-  String[] names={"Tổng quan","Phim","Phòng chiếu","Suất chiếu","Khách hàng","Đơn đặt vé","Vé theo ghế","Nhật ký","Thể loại","Khu vực","Rạp"};
+  String[] names={"Tổng quan","Phim","Phòng chiếu","Suất chiếu","Khách hàng","Đơn đặt vé","Vé theo ghế","Nhật ký","Thể loại","Khu vực","Rạp","Khuyến mãi","Thanh toán QR"};
   for(int i=0;i<names.length;i++){
    String name=names[i];int index=i;Tab tab=new Tab(name);tab.setClosable(false);tabs.getTabs().add(tab);
    Button button=Ui.button(name,()->tabs.getSelectionModel().select(index),"nav-button");button.setMaxWidth(Double.MAX_VALUE);navigation.getChildren().add(button);navigationButtons.add(button);
@@ -36,6 +36,14 @@ public final class AdminController {
   tabs.getSelectionModel().selectedIndexProperty().addListener((o,a,b)->refresh());refresh();
  }
  public void dispose(){disposed=true;refreshVersion++;for(Dialog<?> dialog:List.copyOf(openDialogs))dialog.close();}
+ private void promotion(JsonObject row){
+  JsonObject r=row==null?Json.obj():row;Dialog<Void> dialog=Ui.themed(new Dialog<>());dialog.setTitle("Mã giảm giá");dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+  TextField code=Ui.field(Json.str(r,"code",""),"Mã (VD: CINEMA10)"),percent=Ui.field(Json.str(r,"percent","10"),"Giảm %"),max=Ui.field(Json.str(r,"max_discount","50000"),"Giảm tối đa (đ)"),min=Ui.field(Json.str(r,"min_total","0"),"Đơn tối thiểu (đ)"),quota=Ui.field(Json.str(r,"quota","100"),"Tổng lượt"),per=Ui.field(Json.str(r,"per_user","1"),"Lượt mỗi khách");code.setDisable(row!=null);
+  TextField start=Ui.field(DATE.format(Instant.ofEpochMilli(Json.num(r,"starts_at",System.currentTimeMillis())).atZone(ZoneId.of("Asia/Ho_Chi_Minh"))),"Bắt đầu yyyy-MM-dd HH:mm"),end=Ui.field(DATE.format(Instant.ofEpochMilli(Json.num(r,"ends_at",System.currentTimeMillis()+7L*86400000)).atZone(ZoneId.of("Asia/Ho_Chi_Minh"))),"Kết thúc yyyy-MM-dd HH:mm");
+  CheckBox active=new CheckBox("Đang hoạt động");active.setSelected(Json.num(r,"active",1)==1);
+  Button save=Ui.button("Lưu mã",()->{try{JsonObject data=Json.obj("code",code.getText(),"percent",Long.parseLong(percent.getText()),"max_discount",Long.parseLong(max.getText()),"min_total",Long.parseLong(min.getText()),"quota",Long.parseLong(quota.getText()),"per_user",Long.parseLong(per.getText()),"active",active.isSelected()?1:0,"starts_at",LocalDateTime.parse(start.getText(),DATE).atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant().toEpochMilli(),"ends_at",LocalDateTime.parse(end.getText(),DATE).atZone(ZoneId.of("Asia/Ho_Chi_Minh")).toInstant().toEpochMilli());request(client.request("ADMIN_SAVE_PROMOTION",data),v->{dialog.close();refresh();});}catch(Exception e){Ui.error("Kiểm tra số tiền, lượt và ngày yyyy-MM-dd HH:mm.");}},"primary");
+  VBox box=new VBox(8);String[] labels={"Mã","Giảm (%)","Giảm tối đa (đ)","Đơn tối thiểu (đ)","Tổng lượt","Lượt mỗi khách","Bắt đầu","Kết thúc"};TextField[] fields={code,percent,max,min,quota,per,start,end};for(int i=0;i<fields.length;i++)box.getChildren().addAll(Ui.label(labels[i],"muted"),fields[i]);box.getChildren().addAll(active,save);box.setPadding(new javafx.geometry.Insets(16));ScrollPane scroll=new ScrollPane(box);scroll.setFitToWidth(true);scroll.setPrefViewportHeight(520);dialog.getDialogPane().setContent(scroll);openDialogs.add(dialog);dialog.showAndWait();openDialogs.remove(dialog);
+ }
  private void request(java.util.concurrent.CompletableFuture<JsonElement> future,Consumer<JsonElement> success){
   future.whenComplete((value,error)->Ui.run(()->{if(disposed)return;if(error!=null)Ui.error(Ui.message(error));else success.accept(value);}));
  }
@@ -47,10 +55,15 @@ public final class AdminController {
   sectionLabel.setText(tabs.getTabs().get(index).getText());
   for(int i=0;i<navigationButtons.size();i++){Button b=navigationButtons.get(i);b.getStyleClass().remove("nav-active");if(i==index)b.getStyleClass().add("nav-active");}
   Tab tab=tabs.getTabs().get(index);VBox body=new VBox(12);body.getStyleClass().add("admin-body");tab.setContent(body);
-  String[] commands={"ADMIN_GET_STATS","ADMIN_LIST_MOVIES","ADMIN_LIST_ROOMS","ADMIN_LIST_SHOWS","ADMIN_LIST_USERS","ADMIN_LIST_BOOKINGS","ADMIN_LIST_TICKETS","ADMIN_LIST_LOGS","ADMIN_LIST_GENRES","ADMIN_LIST_AREAS","ADMIN_LIST_CINEMAS"};
+  String[] commands={"ADMIN_GET_STATS","ADMIN_LIST_MOVIES","ADMIN_LIST_ROOMS","ADMIN_LIST_SHOWS","ADMIN_LIST_USERS","ADMIN_LIST_BOOKINGS","ADMIN_LIST_TICKETS","ADMIN_LIST_LOGS","ADMIN_LIST_GENRES","ADMIN_LIST_AREAS","ADMIN_LIST_CINEMAS","ADMIN_LIST_PROMOTIONS","ADMIN_LIST_PAYMENTS"};
   request(client.request(commands[index],Json.obj()),value->{
    if(version!=refreshVersion)return;
    if(index==0){stats(body,value.getAsJsonObject());return;}
+   if(index==11){
+    TableView<JsonObject> promo=Ui.table(value.getAsJsonArray(),"code","Mã","percent","Giảm %","max_discount","Giảm tối đa","min_total","Đơn tối thiểu","ends_at","Hết hạn","quota","Lượt","active","Bật");
+    body.getChildren().addAll(new HBox(10,Ui.button("Thêm mã",()->promotion(null),"primary"),Ui.button("Sửa mã",()->selected(promo,this::promotion),null)),promo);return;
+   }
+   if(index==12){body.getChildren().addAll(Ui.label("REVIEW: đối soát với payOS và liên hệ khách; hệ thống không tự hoàn tiền.","muted"),Ui.table(value.getAsJsonArray(),"id","Giao dịch","user_id","Khách","amount","Số tiền","status","Trạng thái","booking_id","Mã đơn","created_at","Tạo lúc"));return;}
    String[][] columns={
     {},{"id","Mã","title","Tên phim","genre","Thể loại","duration_minutes","Phút","age_rating","Tuổi","release_date","Khởi chiếu","screening_label","Lịch phát hành","active","Hoạt động"},
     {"id","Mã","name","Tên phòng","cinema_name","Rạp","rows_count","Số hàng","cols_count","Ghế / hàng","active","Hoạt động"},
@@ -232,4 +245,5 @@ public final class AdminController {
   });
  }
 }
+
 

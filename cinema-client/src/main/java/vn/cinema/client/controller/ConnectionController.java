@@ -18,18 +18,19 @@ public final class ConnectionController {
  private CinemaApp app;private TcpClient client;private boolean disposed;
  public void detach(){disposed=true;client=null;}
  public void dispose(){disposed=true;if(client!=null){client.onDisconnect(m->{});client.close();client=null;}}
- public void init(CinemaApp app){this.app=app;}
+ public void init(CinemaApp app){this.app=app;var prefs=java.util.prefs.Preferences.userNodeForPackage(ConnectionController.class);hostField.setText(prefs.get("host","127.0.0.1"));portField.setText(prefs.get("port","5000"));}
  @FXML private void connect(){
   String host=hostField.getText().strip();int port;
   try{port=Integer.parseInt(portField.getText().strip());if(port<1 || port>65535 || host.isBlank())throw new NumberFormatException();}
   catch(NumberFormatException e){statusLabel.setText("Nhập IP/hostname và cổng từ 1 đến 65535.");return;}
   connectButton.setDisable(true);statusLabel.setText("Đang kết nối tới "+host+"…");
-  CompletableFuture.supplyAsync(()->{try{return new TcpClient(host,port);}catch(Exception e){throw new CompletionException(e);}})
+  CompletableFuture.supplyAsync(()->{try{TcpClient c=new TcpClient(host,port);try{c.request("PING",Json.obj()).get(8,TimeUnit.SECONDS);return c;}catch(Exception e){c.close();throw e;}}catch(Exception e){throw new CompletionException(e);}})
    .whenComplete((connected,error)->Ui.run(()->{
     if(disposed){if(connected!=null)connected.close();return;}
     connectButton.setDisable(false);
     if(error!=null){statusLabel.setText("Chưa kết nối được: "+Ui.message(error));return;}
     if(client!=null){client.onDisconnect(message->{});client.close();}
+    var prefs=java.util.prefs.Preferences.userNodeForPackage(ConnectionController.class);prefs.put("host",host);prefs.put("port",Integer.toString(port));
     client=connected;loginBox.setDisable(false);statusLabel.setText("Đã kết nối · "+host+":"+port);
     client.onDisconnect(message->Ui.run(()->{if(!disposed){loginBox.setDisable(true);statusLabel.setText(message);}}));
     usernameField.requestFocus();
@@ -49,4 +50,5 @@ public final class ConnectionController {
  }
  private void busy(boolean value){loginButton.setDisable(value);registerButton.setDisable(value);connectButton.setDisable(value);}
 }
+
 
